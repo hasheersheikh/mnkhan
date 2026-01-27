@@ -1,15 +1,33 @@
 const { google } = require("googleapis");
+const path = require("path");
+const fs = require("fs");
 
 // Initialize Google Calendar API client
 const getCalendarClient = () => {
-  if (!process.env.GOOGLE_CLIENT_EMAIL || !process.env.GOOGLE_PRIVATE_KEY) {
-    console.warn(
-      "[Google Calendar] Warning: GOOGLE_CLIENT_EMAIL or GOOGLE_PRIVATE_KEY is missing. Calendar features will be disabled.",
-    );
-    return null;
-  }
-
   try {
+    // Try to load from JSON file first (more reliable for Node.js v24+)
+    const credentialsPath = path.join(
+      __dirname,
+      "..",
+      "google-credentials.json",
+    );
+
+    if (fs.existsSync(credentialsPath)) {
+      const auth = new google.auth.GoogleAuth({
+        keyFile: credentialsPath,
+        scopes: ["https://www.googleapis.com/auth/calendar"],
+      });
+      return google.calendar({ version: "v3", auth });
+    }
+
+    // Fallback to environment variables
+    if (!process.env.GOOGLE_CLIENT_EMAIL || !process.env.GOOGLE_PRIVATE_KEY) {
+      console.warn(
+        "[Google Calendar] Warning: No credentials found. Calendar features will be disabled.",
+      );
+      return null;
+    }
+
     const auth = new google.auth.GoogleAuth({
       credentials: {
         client_email: process.env.GOOGLE_CLIENT_EMAIL,
