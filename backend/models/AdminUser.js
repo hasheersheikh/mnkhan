@@ -1,0 +1,27 @@
+const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs");
+
+const AdminUserSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
+  role: {
+    type: String,
+    enum: ["admin", "super-admin"],
+    default: "admin",
+  },
+  createdAt: { type: Date, default: Date.now },
+});
+
+// Hash password before saving
+AdminUserSchema.pre("save", async function () {
+  if (!this.isModified("password")) return;
+  this.password = await bcrypt.hash(this.password, 10);
+});
+
+// Method to compare password
+AdminUserSchema.methods.comparePassword = async function (candidatePassword) {
+  return await bcrypt.compare(candidatePassword, this.password);
+};
+
+module.exports = mongoose.model("AdminUser", AdminUserSchema);

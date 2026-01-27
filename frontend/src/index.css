@@ -1,0 +1,24 @@
+@import "tailwindcss";
+
+@theme {
+  --color-mnkhan-charcoal: #333132;
+  --color-mnkhan-orange: #FF4612;
+  --color-mnkhan-orange-hover: #E63E0F;
+  --color-mnkhan-gray-bg: #F5F5F5;
+  --color-mnkhan-gray-border: #E0E0E0;
+  --color-mnkhan-text-muted: #666666;
+
+  --font-serif: "Chronicle Display", Georgia, serif;
+  --font-sans: "Gordita", "Inter", -apple-system, sans-serif;
+}
+
+@layer base {
+  body {
+    @apply bg-mnkhan-gray-bg text-mnkhan-charcoal antialiased;
+    font-family: var(--font-sans);
+  }
+  
+  h1, h2, h3, h4 {
+    @apply font-serif;
+  }
+}
