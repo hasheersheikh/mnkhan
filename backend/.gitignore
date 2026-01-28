@@ -37,3 +37,9 @@ coverage/
 # Uploaded files (if stored locally)
 uploads/
 temp/
+
+
+# Environment variables
+.env
+.env.local
+.env.*.local
