@@ -5,6 +5,7 @@ const HourlyRate = require("../models/HourlyRate");
 const razorpayService = require("../services/razorpay");
 const googleCalendarService = require("../services/googleCalendar");
 const emailService = require("../services/emailService");
+const { authenticateToken, authorizeRole } = require("../middleware/auth");
 
 /**
  * POST /api/appointment
@@ -727,5 +728,51 @@ router.patch("/:id/reschedule", async (req, res) => {
     });
   }
 });
+
+/**
+ * DELETE /api/appointment/:id
+ * Delete an appointment (admin only)
+ */
+router.delete(
+  "/:id",
+  authenticateToken,
+  authorizeRole(["admin", "super-admin"]),
+  async (req, res) => {
+    try {
+      const appointment = await Appointment.findByIdAndDelete(req.params.id);
+      if (!appointment) {
+        return res.status(404).json({
+          success: false,
+          message: "Appointment not found",
+        });
+      }
+
+      // If it had a calendar event, delete it
+      if (appointment.googleCalendarEventId) {
+        try {
+          await googleCalendarService.deleteCalendarEvent(
+            appointment.googleCalendarEventId,
+          );
+        } catch (err) {
+          console.warn(
+            "[Appointment] Could not delete calendar event during deletion:",
+            err.message,
+          );
+        }
+      }
+
+      res.json({
+        success: true,
+        message: "Appointment deleted successfully",
+      });
+    } catch (error) {
+      console.error("[Appointment] Error deleting appointment:", error);
+      res.status(500).json({
+        success: false,
+        message: error.message || "Failed to delete appointment",
+      });
+    }
+  },
+);
 
 module.exports = router;

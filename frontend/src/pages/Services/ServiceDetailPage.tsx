@@ -10,6 +10,8 @@ interface Service {
   price: string;
   details: string;
   criteria: string;
+  servicer?: string;
+  acceptanceCreteria?: string;
 }
 
 const ServiceDetailPage: React.FC = () => {
@@ -66,7 +68,9 @@ const ServiceDetailPage: React.FC = () => {
             ← All Services
           </Link>
           <h1 className="text-5xl md:text-6xl font-serif italic mb-6">{service.name}</h1>
-          <p className="text-2xl font-bold text-mnkhan-orange mb-8">{service.price}</p>
+          <p className="text-2xl font-bold text-mnkhan-orange mb-8">
+            {service.price ? `₹${service.price}` : 'Login for price'}
+          </p>
           <p className="text-xl text-white/60 max-w-3xl leading-relaxed">
             {service.description}
           </p>
@@ -82,8 +86,8 @@ const ServiceDetailPage: React.FC = () => {
             <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-mnkhan-orange mb-6 flex items-center gap-2">
               <span className="w-8 h-[1px] bg-mnkhan-orange" /> Service Provided
             </h2>
-            <p className="text-mnkhan-charcoal text-lg leading-relaxed">
-              {service.details}
+            <p className="text-mnkhan-charcoal text-lg leading-relaxed whitespace-pre-line">
+              {service.servicer || service.details}
             </p>
           </div>
 
@@ -92,8 +96,8 @@ const ServiceDetailPage: React.FC = () => {
             <h2 className="text-sm font-bold uppercase tracking-[0.2em] text-mnkhan-orange mb-6 flex items-center gap-2">
               <span className="w-8 h-[1px] bg-mnkhan-orange" /> Acceptance Criteria
             </h2>
-            <p className="text-mnkhan-charcoal text-lg leading-relaxed">
-              {service.criteria}
+            <p className="text-mnkhan-charcoal text-lg leading-relaxed whitespace-pre-line">
+              {service.acceptanceCreteria || service.criteria}
             </p>
           </div>
         </div>

@@ -418,9 +418,125 @@ const sendRescheduleEmail = async (appointment, previousDetails) => {
   }
 };
 
+/**
+ * Send account activation email
+ * @param {object} user - User details
+ * @returns {Promise<object>} Email send result
+ */
+const sendAccountActivationEmail = async (user) => {
+  try {
+    const transporter = createTransporter();
+    const { name, email } = user;
+
+    const emailHtml = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <title>Account Activated</title>
+    </head>
+    <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="background: #28a745; padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
+        <h1 style="color: white; margin: 0;">Account Activated! 🚀</h1>
+      </div>
+      
+      <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
+        <p>Hello <strong>${name}</strong>,</p>
+        
+        <p>Great news! Your account at <strong>MN Khan & Associates</strong> has been reviewed and activated by our team.</p>
+        
+        <p>You can now log in to the Secure Client Access portal to view service details and manage your legal requirements.</p>
+        
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${process.env.FRONTEND_URL || "http://localhost:5173"}" style="display: inline-block; background: #333132; color: white; padding: 12px 35px; text-decoration: none; border-radius: 5px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">Log In to Portal</a>
+        </div>
+        
+        <p>If you have any questions, feel free to reply to this email.</p>
+        
+        <p style="color: #666; font-size: 12px; margin-top: 30px; text-align: center;">
+          Welcome to the ecosystem.<br>
+          MN Khan
+        </p>
+      </div>
+    </body>
+    </html>
+    `;
+
+    const mailOptions = {
+      from: process.env.SMTP_FROM || process.env.SMTP_USER,
+      to: email,
+      subject: "Welcome to MN Khan - Your account is now active",
+      html: emailHtml,
+    };
+
+    const result = await transporter.sendMail(mailOptions);
+    console.log("[Email] Activation email sent:", result.messageId);
+    return result;
+  } catch (error) {
+    console.error("[Email] Error sending activation email:", error);
+    throw new Error("Failed to send activation email");
+  }
+};
+
+/**
+ * Send account deactivation email
+ * @param {object} user - User details
+ * @returns {Promise<object>} Email send result
+ */
+const sendAccountDeactivationEmail = async (user) => {
+  try {
+    const transporter = createTransporter();
+    const { name, email } = user;
+
+    const emailHtml = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <title>Account Update</title>
+    </head>
+    <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="background: #6c757d; padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
+        <h1 style="color: white; margin: 0;">Account Update</h1>
+      </div>
+      
+      <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
+        <p>Hello <strong>${name}</strong>,</p>
+        
+        <p>Your account at <strong>MN Khan & Associates</strong> has been deactivated.</p>
+        
+        <p>If you believe this is a mistake or would like to request reactivation, please contact our administrative team.</p>
+        
+        <p style="color: #666; font-size: 12px; margin-top: 30px; text-align: center;">
+          Thank you,<br>
+          MN Khan
+        </p>
+      </div>
+    </body>
+    </html>
+    `;
+
+    const mailOptions = {
+      from: process.env.SMTP_FROM || process.env.SMTP_USER,
+      to: email,
+      subject: "Important update regarding your MN Khan account",
+      html: emailHtml,
+    };
+
+    const result = await transporter.sendMail(mailOptions);
+    console.log("[Email] Deactivation email sent:", result.messageId);
+    return result;
+  } catch (error) {
+    console.error("[Email] Error sending deactivation email:", error);
+    throw new Error("Failed to send deactivation email");
+  }
+};
+
 module.exports = {
   sendConfirmationEmail,
   sendCancellationEmail,
   sendRescheduleEmail,
+  sendAccountActivationEmail,
+  sendAccountDeactivationEmail,
   generateICSFile,
 };

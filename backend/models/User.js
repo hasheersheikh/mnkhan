@@ -4,11 +4,17 @@ const bcrypt = require("bcryptjs");
 const UserSchema = new mongoose.Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
+  phone: { type: String, required: true },
   password: { type: String, required: true },
   role: {
     type: String,
     enum: ["client", "admin", "super-admin"], // Note: Admin roles are now being migrated to AdminUser collection
     default: "client",
+  },
+  status: {
+    type: String,
+    enum: ["pending", "active", "deactivated"],
+    default: "pending",
   },
   createdAt: { type: Date, default: Date.now },
 });

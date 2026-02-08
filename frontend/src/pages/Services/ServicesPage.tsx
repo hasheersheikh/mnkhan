@@ -66,8 +66,10 @@ const ServicesPage: React.FC = () => {
               
               <div className="mt-8 pt-8 border-t border-mnkhan-gray-border flex items-center justify-between">
                 <div>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-mnkhan-text-muted mb-1">Professional Fee</p>
-                  <p className="text-2xl font-bold text-mnkhan-charcoal">{service.price}</p>
+                  {service.price && <p className="text-[10px] font-bold uppercase tracking-widest text-mnkhan-text-muted mb-1">Professional Fee</p>}
+                  <p className="text-2xl font-bold text-mnkhan-charcoal">
+                    {service.price ? `₹${service.price}` : ''}
+                  </p>
                 </div>
                 <div className="bg-mnkhan-charcoal text-white px-6 py-3 font-bold uppercase tracking-widest text-xs group-hover:bg-mnkhan-orange transition-colors">
                   Details

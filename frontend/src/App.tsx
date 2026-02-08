@@ -26,6 +26,7 @@ import PaymentSuccess from './pages/Appointment/PaymentSuccess';
 import ManageAppointments from './pages/Dashboard/ManageAppointments';
 import MyDocuments from './pages/Dashboard/MyDocuments';
 import ManageDocuments from './pages/Dashboard/ManageDocuments';
+import ManageClients from './pages/Dashboard/ManageClients';
 
 
 const App: React.FC = () => {
@@ -87,6 +88,7 @@ const App: React.FC = () => {
             <Route path="manage-inquiries" element={<ManageInquiries />} />
             <Route path="manage-appointments" element={<ManageAppointments />} />
             <Route path="manage-documents" element={<ManageDocuments />} />
+            <Route path="manage-clients" element={<ManageClients />} />
             <Route path="site-content" element={<ManageBlogs />} />
           </Route>
 

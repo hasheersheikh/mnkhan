@@ -9,7 +9,7 @@ const JWT_SECRET = process.env.JWT_SECRET || "mnkhan_secret_key_2026";
 // Signup Route (Public - Clients Only)
 router.post("/signup", async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, email, phone, password, role } = req.body;
 
     // Security: Block administrative roles from public signup
     if (role && ["admin", "super-admin"].includes(role)) {
@@ -29,25 +29,19 @@ router.post("/signup", async (req, res) => {
         .json({ success: false, message: "User already exists" });
     }
 
-    const user = new User({ name, email, password, role: "client" });
+    const user = new User({ name, email, phone, password, role: "client", status: "pending" });
     await user.save();
-
-    const token = jwt.sign(
-      {
-        id: user._id,
-        email: user.email,
-        name: user.name,
-        role: user.role,
-        type: "client",
-      },
-      JWT_SECRET,
-      { expiresIn: "7d" },
-    );
 
     res.status(201).json({
       success: true,
-      token,
-      user: { name: user.name, email: user.email, role: user.role },
+      message: "Account created successfully. Your account is currently pending administrative approval. You will receive an email once it is activated.",
+      user: {
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        status: user.status
+      },
     });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -73,6 +67,19 @@ router.post("/login", async (req, res) => {
       return res
         .status(401)
         .json({ success: false, message: "Invalid credentials" });
+    }
+
+    // Check status for clients
+    if (!isAdmin && user.status !== "active") {
+      const statusMsg = user.status === "pending" 
+        ? "Your account is pending approval. You will be notified via email once activated." 
+        : "Your account has been deactivated. Please contact support.";
+      
+      return res.status(403).json({
+        success: false,
+        message: statusMsg,
+        status: user.status
+      });
     }
 
     const token = jwt.sign(

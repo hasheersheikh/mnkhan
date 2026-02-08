@@ -165,9 +165,51 @@ router.get(
   async (req, res) => {
     try {
       const users = await User.find({ role: "client" }).select(
-        "name email _id",
+        "name email status _id phone createdAt",
       );
       res.json({ success: true, users });
+    } catch (err) {
+      res.status(500).json({ success: false, message: err.message });
+    }
+  },
+);
+
+// Admin: Update user status
+router.patch(
+  "/users/:id/status",
+  authenticateToken,
+  authorizeRole(["admin", "super-admin"]),
+  async (req, res) => {
+    try {
+      const { status } = req.body;
+      const validStatuses = ["pending", "active", "deactivated"];
+      
+      if (!validStatuses.includes(status)) {
+        return res.status(400).json({ success: false, message: "Invalid status" });
+      }
+
+      const user = await User.findById(req.params.id);
+      if (!user) {
+        return res.status(404).json({ success: false, message: "User not found" });
+      }
+
+      const oldStatus = user.status;
+      user.status = status;
+      await user.save();
+
+      // Send email notifications
+      try {
+        const emailService = require("../services/emailService");
+        if (oldStatus === "pending" && status === "active") {
+          await emailService.sendAccountActivationEmail(user);
+        } else if (status === "deactivated" && oldStatus !== "deactivated") {
+          await emailService.sendAccountDeactivationEmail(user);
+        }
+      } catch (emailErr) {
+        console.warn("[Admin] Status updated but email failed:", emailErr.message);
+      }
+
+      res.json({ success: true, message: `User status updated to ${status}`, user });
     } catch (err) {
       res.status(500).json({ success: false, message: err.message });
     }

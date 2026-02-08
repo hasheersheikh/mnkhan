@@ -123,3 +123,9 @@ export const rescheduleAppointment = async (id: string, data: { date: string; st
   const response = await client.patch(`/appointment/${id}/reschedule`, data);
   return response.data;
 };
+
+// Delete appointment (admin only)
+export const deleteAppointment = async (id: string) => {
+  const response = await client.delete(`/appointment/${id}`);
+  return response.data;
+};

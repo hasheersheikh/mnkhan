@@ -19,6 +19,7 @@ const Sidebar: React.FC = () => {
     { label: 'Manage People', path: '/portal/manage-people' },
     { label: 'Manage Services', path: '/portal/manage-services' },
     { label: 'Manage Inquiries', path: '/portal/manage-inquiries' },
+    { label: 'Manage Clients', path: '/portal/manage-clients' },
     { label: 'Manage Appointments', path: '/portal/manage-appointments' },
     { label: 'Manage Documents', path: '/portal/manage-documents' },
     { label: 'Site Content', path: '/portal/site-content' },

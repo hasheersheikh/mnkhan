@@ -14,6 +14,7 @@ const Login: React.FC<LoginProps> = ({ onClose, onSuccess }) => {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    phone: '',
     password: ''
   });
   const [loading, setLoading] = useState(false);
@@ -46,9 +47,15 @@ const Login: React.FC<LoginProps> = ({ onClose, onSuccess }) => {
 
         const data = response.data;
         if (data.success) {
-          localStorage.setItem('mnkhan_token', data.token);
-          localStorage.setItem('mnkhan_user', JSON.stringify(data.user));
-          onSuccess();
+          if (isSignup) {
+            setMessage(data.message);
+            setFormData({ name: '', email: '', phone: '', password: '' });
+            // Don't auto-login for signup anymore, wait for admin approval
+          } else {
+            localStorage.setItem('mnkhan_token', data.token);
+            localStorage.setItem('mnkhan_user', JSON.stringify(data.user));
+            onSuccess();
+          }
         } else {
           setError(data.message || 'Authentication failed');
         }
@@ -106,17 +113,30 @@ const Login: React.FC<LoginProps> = ({ onClose, onSuccess }) => {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {(!isForgotPassword && isSignup) && (
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold uppercase tracking-widest text-mnkhan-text-muted">Full Name</label>
-              <input 
-                type="text" 
-                required
-                value={formData.name}
-                onChange={e => setFormData({...formData, name: e.target.value})}
-                className="w-full border-b-2 border-mnkhan-gray-border focus:border-mnkhan-orange py-2 outline-none transition-colors"
-                placeholder="John Doe"
-              />
-            </div>
+            <>
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-mnkhan-text-muted">Full Name</label>
+                <input 
+                  type="text" 
+                  required
+                  value={formData.name}
+                  onChange={e => setFormData({...formData, name: e.target.value})}
+                  className="w-full border-b-2 border-mnkhan-gray-border focus:border-mnkhan-orange py-2 outline-none transition-colors"
+                  placeholder="John Doe"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold uppercase tracking-widest text-mnkhan-text-muted">Phone Number</label>
+                <input 
+                  type="tel" 
+                  required
+                  value={formData.phone}
+                  onChange={e => setFormData({...formData, phone: e.target.value})}
+                  className="w-full border-b-2 border-mnkhan-gray-border focus:border-mnkhan-orange py-2 outline-none transition-colors"
+                  placeholder="+91 98765 43210"
+                />
+              </div>
+            </>
           )}
           <div className="space-y-1">
             <label className="text-[10px] font-bold uppercase tracking-widest text-mnkhan-text-muted">Email Address</label>

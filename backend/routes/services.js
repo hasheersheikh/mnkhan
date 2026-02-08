@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const Service = require("../models/Service");
-const { authenticateToken, authorizeRole } = require("../middleware/auth");
+const { authenticateToken, authorizeRole, optionalAuthenticateToken } = require("../middleware/auth");
 
 // Seeding logic (internal)
 const seedServices = async () => {
@@ -67,11 +67,20 @@ const seedServices = async () => {
 };
 
 // GET all services (Public)
-router.get("/", async (req, res) => {
+router.get("/", optionalAuthenticateToken, async (req, res) => {
   try {
     await seedServices(); // Run seeding if DB empty
-    const services = await Service.find().sort({ name: 1 });
-    // Transform to include 'id' for frontend compatibility if needed, or update frontend to use '_id'
+    let services = await Service.find().sort({ name: 1 });
+    
+    // Hide price for non-logged-in users
+    if (!req.user) {
+      services = services.map(s => {
+        const sObj = s.toObject();
+        delete sObj.price;
+        return sObj;
+      });
+    }
+    
     res.json({ success: true, services });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -79,14 +88,19 @@ router.get("/", async (req, res) => {
 });
 
 // GET single service
-router.get("/:id", async (req, res) => {
+router.get("/:id", optionalAuthenticateToken, async (req, res) => {
   try {
     const service = await Service.findById(req.params.id);
-    if (service) {
-      res.json({ success: true, service });
-    } else {
-      res.status(404).json({ success: false, message: "Service not found" });
+    if (!service) {
+      return res.status(404).json({ success: false, message: "Service not found" });
     }
+    
+    const serviceObj = service.toObject();
+    if (!req.user) {
+      delete serviceObj.price;
+    }
+    
+    res.json({ success: true, service: serviceObj });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }

@@ -3,7 +3,8 @@ import {
   getHourlyRate, 
   updateHourlyRate, 
   getAppointments,
-  rescheduleAppointment 
+  rescheduleAppointment,
+  deleteAppointment
 } from '../../api/appointment';
 
 interface Appointment {
@@ -109,6 +110,26 @@ const ManageAppointments: React.FC = () => {
     } catch (err: any) {
       console.error('Reschedule error:', err);
       alert(err.response?.data?.message || 'Rescheduling failed. Slot might be taken.');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleDeleteAppointment = async (id: string) => {
+    if (!window.confirm('Are you sure you want to permanently delete this appointment? This will also remove any associated calendar events.')) {
+      return;
+    }
+
+    setUpdating(true);
+    try {
+      const res = await deleteAppointment(id);
+      if (res.success) {
+        alert('Appointment deleted successfully');
+        fetchData();
+      }
+    } catch (err: any) {
+      console.error('Delete error:', err);
+      alert(err.response?.data?.message || 'Failed to delete appointment');
     } finally {
       setUpdating(false);
     }
@@ -284,6 +305,12 @@ const ManageAppointments: React.FC = () => {
                         >
                           Reschedule
                         </button>
+                        <button 
+                          onClick={() => handleDeleteAppointment(apt._id)}
+                          className="text-[10px] font-bold text-red-600 hover:underline uppercase tracking-widest"
+                        >
+                          Delete
+                        </button>
                         {apt.googleMeetLink && (
                           <a 
                             href={apt.googleMeetLink}
@@ -347,6 +374,12 @@ const ManageAppointments: React.FC = () => {
                       className="text-blue-600 hover:text-blue-800 text-xs font-bold uppercase tracking-widest"
                     >
                       Reschedule
+                    </button>
+                    <button 
+                      onClick={() => handleDeleteAppointment(apt._id)}
+                      className="text-red-500 hover:text-red-700 text-xs font-bold uppercase tracking-widest px-2"
+                    >
+                      Delete
                     </button>
                     {apt.googleMeetLink && (
                       <a href={apt.googleMeetLink} target="_blank" rel="noopener noreferrer" className="text-mnkhan-orange hover:underline text-xs font-bold uppercase tracking-widest">

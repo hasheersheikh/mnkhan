@@ -6,6 +6,8 @@ const ServiceSchema = new mongoose.Schema({
   price: { type: String, required: true },
   details: { type: String },
   criteria: { type: String },
+  servicer: { type: String },
+  acceptanceCreteria: { type: String },
   defaultSteps: [{ type: String }],
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
