@@ -10,6 +10,8 @@ router.get("/", authenticateToken, async (req, res) => {
     let query = {};
     if (req.user.role === "client") {
       query = { userId: req.user._id };
+    } else if (req.user.role === "staff") {
+      query = { assignedStaffId: req.user._id };
     } else if (req.query.userId) {
       query = { userId: req.query.userId };
     }
@@ -17,9 +19,19 @@ router.get("/", authenticateToken, async (req, res) => {
     const tasks = await Task.find(query)
       .populate("userId", "name email")
       .populate("adminId", "name")
+      .populate("assignedStaffId", "name")
       .sort({ updatedAt: -1 });
 
-    res.json({ success: true, tasks });
+    // Mask sensitive financial data for staff
+    const processedTasks = tasks.map(t => {
+      const taskObj = t.toObject();
+      if (req.user.role === "staff") {
+        delete taskObj.amountPaid;
+      }
+      return taskObj;
+    });
+
+    res.json({ success: true, tasks: processedTasks });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -30,7 +42,8 @@ router.get("/:id", authenticateToken, async (req, res) => {
   try {
     const task = await Task.findById(req.params.id)
       .populate("userId", "name email")
-      .populate("adminId", "name");
+      .populate("adminId", "name")
+      .populate("assignedStaffId", "name");
 
     if (!task) {
       return res
@@ -38,15 +51,20 @@ router.get("/:id", authenticateToken, async (req, res) => {
         .json({ success: false, message: "Task not found" });
     }
 
-    // Client can only see their own tasks
-    if (
-      req.user.role === "client" &&
-      task.userId._id.toString() !== req.user._id.toString()
-    ) {
+    // Client/Staff access control
+    if (req.user.role === "client" && task.userId._id.toString() !== req.user._id.toString()) {
       return res.status(403).json({ success: false, message: "Forbidden" });
     }
+    if (req.user.role === "staff" && (!task.assignedStaffId || task.assignedStaffId._id.toString() !== req.user._id.toString())) {
+      return res.status(403).json({ success: false, message: "Forbidden: Not assigned to this matter" });
+    }
 
-    res.json({ success: true, task });
+    const taskObj = task.toObject();
+    if (req.user.role === "staff") {
+      delete taskObj.amountPaid;
+    }
+
+    res.json({ success: true, task: taskObj });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -106,27 +124,30 @@ router.post(
   },
 );
 
-// ADMIN: Update task and timeline
+// Update task and timeline (Admins see all, Staff see assigned)
 router.patch(
   "/:id",
   authenticateToken,
-  authorizeRole(["admin", "super-admin"]),
+  authorizeRole(["admin", "super-admin", "staff"]),
   async (req, res) => {
     try {
-      const { status, progress, newEvent, eventNote, steps } = req.body;
+      const { status, progress, newEvent, eventNote, steps, assignedStaffId } = req.body;
       console.log(
         `[API] PATCH /tasks/${req.params.id} - Steps received: ${!!steps}`,
       );
 
       const task = await Task.findById(req.params.id);
 
-      if (!task) {
-        return res
-          .status(404)
-          .json({ success: false, message: "Task not found" });
+      if (req.user.role === "staff" && (!task.assignedStaffId || task.assignedStaffId.toString() !== req.user._id.toString())) {
+        return res.status(403).json({ success: false, message: "Forbidden" });
       }
 
       if (status) task.status = status;
+      
+      // Admin only assignment
+      if (assignedStaffId !== undefined && ["admin", "super-admin"].includes(req.user.role)) {
+        task.assignedStaffId = assignedStaffId || null;
+      }
 
       if (steps) {
         task.steps = steps;
@@ -157,10 +178,17 @@ router.patch(
       }
 
       await task.save();
-      console.log(
-        `[API] Task updated: ${task._id}, Progress: ${task.progress}%`,
-      );
-      res.json({ success: true, task });
+      
+      const updatedTask = await Task.findById(task._id)
+        .populate("userId", "name email")
+        .populate("adminId", "name")
+        .populate("assignedStaffId", "name");
+
+      const taskObj = updatedTask.toObject();
+      if (req.user.role === "staff") delete taskObj.amountPaid;
+
+      console.log(`[API] Task updated: ${task._id}, Progress: ${task.progress}%`);
+      res.json({ success: true, task: taskObj });
     } catch (err) {
       console.error(`[API] Task update error: ${err.message}`);
       res.status(500).json({ success: false, message: err.message });
@@ -212,7 +240,7 @@ router.post("/:id/comments", authenticateToken, async (req, res) => {
 
     const comment = {
       senderId: req.user._id,
-      senderRole: req.user.role === "client" ? "client" : "admin",
+      senderRole: req.user.role,
       text,
       date: new Date()
     };

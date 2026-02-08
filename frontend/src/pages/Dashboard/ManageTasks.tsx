@@ -6,21 +6,31 @@ import * as servicesApi from '../../api/services';
 import { 
   Search, Plus, Briefcase, ChevronRight, 
   Filter, ClipboardList, Clock, 
-  Trash2, ExternalLink, Users
+  Trash2, ExternalLink, Users,
+  UserPlus
 } from 'lucide-react';
+import StaffAssignmentModal from '../../components/Dashboard/StaffAssignmentModal';
 
 const ManageTasks: React.FC = () => {
   const [clients, setClients] = useState<any[]>([]);
+  const [staffList, setStaffList] = useState<any[]>([]);
   const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedClientId, setSelectedClientId] = useState<string | null>(null);
   const [clientSearchTerm, setClientSearchTerm] = useState('');
   const [isAssigning, setIsAssigning] = useState(false);
   
+  // Assignment Modal State
+  const [assignmentModal, setAssignmentModal] = useState<{ isOpen: boolean; taskId: string; currentStaffId?: string }>({
+    isOpen: false,
+    taskId: ''
+  });
+  
   const [taskForm, setTaskForm] = useState({ 
     title: '', 
     description: '', 
     userId: '', 
+    assignedStaffId: '',
     progress: 0,
     steps: [] as { title: string; completed: boolean }[]
   });
@@ -43,13 +53,15 @@ const ManageTasks: React.FC = () => {
   const fetchInitialData = async () => {
     try {
       setLoading(true);
-      const [usersRes, servicesRes] = await Promise.all([
+      const [usersRes, servicesRes, staffRes] = await Promise.all([
         adminApi.getUsers(),
-        servicesApi.getServices()
+        servicesApi.getServices(),
+        adminApi.getStaff()
       ]);
       
       if (usersRes.data.success) setClients(usersRes.data.users);
       if (servicesRes.data.success) setAvailableServices(servicesRes.data.services);
+      if (staffRes.data.success) setStaffList(staffRes.data.staff);
     } catch (err) {
       console.error(err);
     } finally {
@@ -90,7 +102,7 @@ const ManageTasks: React.FC = () => {
     try {
       const res = await tasksApi.createTask(taskForm);
       if (res.data.success) {
-        setTaskForm({ title: '', description: '', userId: '', progress: 0, steps: [] });
+        setTaskForm({ title: '', description: '', userId: '', assignedStaffId: '', progress: 0, steps: [] });
         setIsAssigning(false);
         if (selectedClientId) fetchTasksForClient(selectedClientId);
         else fetchAllTasks();
@@ -98,17 +110,18 @@ const ManageTasks: React.FC = () => {
     } catch (err) { console.error(err); }
   };
 
-  const handleDeleteTask = async (e: React.MouseEvent, taskId: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!window.confirm('Are you sure you want to delete this task?')) return;
+  const handleUpdateAssignment = async (staffId: string) => {
+    if (!assignmentModal.taskId) return;
     try {
-      const res = await tasksApi.deleteTask(taskId);
+      const res = await tasksApi.updateTask(assignmentModal.taskId, { assignedStaffId: staffId });
       if (res.data.success) {
         if (selectedClientId) fetchTasksForClient(selectedClientId);
         else fetchAllTasks();
       }
-    } catch (err) { console.error(err); }
+    } catch (err) {
+      console.error('Failed to update assignment:', err);
+      alert('Failed to update assignment');
+    }
   };
 
   const handleAddStep = () => {
@@ -252,6 +265,20 @@ const ManageTasks: React.FC = () => {
                         {clients.map((c: any) => <option key={c._id} value={c._id}>{c.name}</option>)}
                       </select>
                     </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-bold uppercase tracking-widest text-mnkhan-text-muted">Assigned Staff (Optional)</label>
+                      <select 
+                        value={taskForm.assignedStaffId}
+                        onChange={e => setTaskForm({...taskForm, assignedStaffId: e.target.value})}
+                        className="w-full border-b-2 border-mnkhan-gray-border focus:border-mnkhan-orange py-2 outline-none bg-transparent text-sm"
+                      >
+                        <option value="">Assign Later (Admin Default)</option>
+                        {staffList.map((s: any) => <option key={s._id} value={s._id}>{s.name}</option>)}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-6">
                     <div className="space-y-1">
                       <label className="text-[10px] font-bold uppercase tracking-widest text-mnkhan-text-muted">Template Service</label>
                       <select 
@@ -435,7 +462,30 @@ const ManageTasks: React.FC = () => {
                           </div>
                           <div className="flex items-center gap-2">
                             <button 
-                              onClick={(e) => handleDeleteTask(e, t._id)}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setAssignmentModal({
+                                  isOpen: true,
+                                  taskId: t._id,
+                                  currentStaffId: t.assignedStaffId?._id
+                                });
+                              }}
+                              className="p-2 text-mnkhan-text-muted hover:text-mnkhan-orange hover:bg-mnkhan-orange/10 rounded-sm transition-all"
+                              title="Assign Staff"
+                            >
+                              <UserPlus size={14} />
+                            </button>
+                            <button 
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                if (!window.confirm('Are you sure you want to delete this task?')) return;
+                                tasksApi.deleteTask(t._id).then(() => {
+                                  if (selectedClientId) fetchTasksForClient(selectedClientId);
+                                  else fetchAllTasks();
+                                });
+                              }}
                               className="p-2 text-mnkhan-text-muted hover:text-red-500 hover:bg-red-50 rounded-sm transition-all opacity-0 group-hover:opacity-100"
                               title="Delete Matter"
                             >
@@ -472,6 +522,12 @@ const ManageTasks: React.FC = () => {
           )}
         </div>
       </div>
+      <StaffAssignmentModal 
+        isOpen={assignmentModal.isOpen}
+        onClose={() => setAssignmentModal({ ...assignmentModal, isOpen: false })}
+        onAssign={handleUpdateAssignment}
+        currentStaffId={assignmentModal.currentStaffId}
+      />
     </div>
   );
 };

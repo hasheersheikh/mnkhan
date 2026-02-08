@@ -244,4 +244,67 @@ router.post(
   }
 );
 
+// Staff Management
+router.get(
+  "/staff",
+  authenticateToken,
+  authorizeRole(["admin", "super-admin"]),
+  async (req, res) => {
+    try {
+      const staff = await AdminUser.find({ role: "staff" }).select("-password");
+      res.json({ success: true, staff });
+    } catch (err) {
+      res.status(500).json({ success: false, message: err.message });
+    }
+  }
+);
+
+router.post(
+  "/staff",
+  authenticateToken,
+  authorizeRole(["admin", "super-admin"]),
+  async (req, res) => {
+    try {
+      const { name, email, password } = req.body;
+      const existing = await AdminUser.findOne({ email });
+      if (existing) {
+        return res.status(400).json({ success: false, message: "User already exists with this email" });
+      }
+
+      const staff = new AdminUser({
+        name,
+        email,
+        password,
+        role: "staff"
+      });
+
+      await staff.save();
+      res.status(201).json({ success: true, message: "Staff account created successfully" });
+    } catch (err) {
+      res.status(500).json({ success: false, message: err.message });
+    }
+  }
+);
+
+router.post(
+  "/staff/:id/reset-password",
+  authenticateToken,
+  authorizeRole(["admin", "super-admin"]),
+  async (req, res) => {
+    try {
+      const { password } = req.body;
+      const staff = await AdminUser.findById(req.params.id);
+      if (!staff || staff.role !== "staff") {
+        return res.status(404).json({ success: false, message: "Staff member not found" });
+      }
+
+      staff.password = password;
+      await staff.save();
+      res.json({ success: true, message: "Staff password reset successful" });
+    } catch (err) {
+      res.status(500).json({ success: false, message: err.message });
+    }
+  }
+);
+
 module.exports = router;

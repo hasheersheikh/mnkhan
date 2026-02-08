@@ -178,6 +178,9 @@ router.post("/verify-payment", authenticateToken, async (req, res) => {
     const purchasedServices = [...cart.items]; // Keep track for email
 
     for (const service of cart.items) {
+      const priceStr = (service.price || "0").toString().replace(/[^0-9.]/g, "");
+      const price = parseFloat(priceStr) || 0;
+
       const task = new Task({
         title: service.name,
         description: `Service purchased: ${service.name}. ${service.description || ""}`,
@@ -185,6 +188,7 @@ router.post("/verify-payment", authenticateToken, async (req, res) => {
         adminId: admin._id,
         status: "pending",
         progress: 0,
+        amountPaid: price,
         timeline: [{ event: "Service Purchased", note: `Purchased via consolidated cart. Payment ID: ${razorpay_payment_id}` }]
       });
 

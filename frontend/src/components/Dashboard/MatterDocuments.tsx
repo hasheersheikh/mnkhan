@@ -15,12 +15,13 @@ interface Document {
 interface MatterDocumentsProps {
   taskId: string;
   isAdmin: boolean;
+  isStaff: boolean;
 }
 
 const ALLOWED_TYPES = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
 const MAX_SIZE = 5 * 1024 * 1024; // 5 MB
 
-const MatterDocuments: React.FC<MatterDocumentsProps> = ({ taskId, isAdmin }) => {
+const MatterDocuments: React.FC<MatterDocumentsProps> = ({ taskId, isAdmin, isStaff }) => {
   const [documents, setDocuments] = useState<Document[]>([]);
   const [fetching, setFetching] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -96,17 +97,19 @@ const MatterDocuments: React.FC<MatterDocumentsProps> = ({ taskId, isAdmin }) =>
           <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-mnkhan-text-muted">Official Acquisition & Verification Repository</p>
         </div>
         
-        <div className="flex flex-col items-end gap-3">
-          <label className={`flex items-center gap-3 px-6 py-3 bg-mnkhan-charcoal text-white text-[10px] font-bold uppercase tracking-widest rounded-sm transition-all shadow-lg cursor-pointer hover:bg-mnkhan-orange ${uploading ? 'opacity-50 pointer-events-none' : ''}`}>
-            {uploading ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} className="text-mnkhan-orange" />}
-            {uploading ? 'Transmitting...' : 'Upload Official Record'}
-            <input type="file" className="hidden" onChange={handleFileUpload} disabled={uploading} />
-          </label>
-          <div className="flex items-center gap-2 px-2 py-1 bg-mnkhan-gray-light border border-mnkhan-gray-border rounded-sm">
-            <Info size={10} className="text-mnkhan-charcoal opacity-40" />
-            <span className="text-[8px] font-bold uppercase text-mnkhan-text-muted opacity-60">PDF, JPG, PNG • Max 5MB</span>
+        {(isAdmin || !isStaff) && (
+          <div className="flex flex-col items-end gap-3">
+            <label className={`flex items-center gap-3 px-6 py-3 bg-mnkhan-charcoal text-white text-[10px] font-bold uppercase tracking-widest rounded-sm transition-all shadow-lg cursor-pointer hover:bg-mnkhan-orange ${uploading ? 'opacity-50 pointer-events-none' : ''}`}>
+              {uploading ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} className="text-mnkhan-orange" />}
+              {uploading ? 'Transmitting...' : 'Upload Official Record'}
+              <input type="file" className="hidden" onChange={handleFileUpload} disabled={uploading} />
+            </label>
+            <div className="flex items-center gap-2 px-2 py-1 bg-mnkhan-gray-light border border-mnkhan-gray-border rounded-sm">
+              <Info size={10} className="text-mnkhan-charcoal opacity-40" />
+              <span className="text-[8px] font-bold uppercase text-mnkhan-text-muted opacity-60">PDF, JPG, PNG • Max 5MB</span>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {uploadError && (

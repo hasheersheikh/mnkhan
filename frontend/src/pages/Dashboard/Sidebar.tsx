@@ -19,6 +19,7 @@ import {
 const Sidebar: React.FC = () => {
   const user = JSON.parse(localStorage.getItem('mnkhan_user') || '{}');
   const isAdmin = ['admin', 'super-admin'].includes(user.role);
+  const isStaff = user.role === 'staff';
   const location = useLocation();
 
   const clientItems = [
@@ -32,10 +33,11 @@ const Sidebar: React.FC = () => {
   const adminItems = [
     { label: 'Overview', path: '/portal/overview', icon: LayoutDashboard },
     { label: 'Manage Tasks', path: '/portal/admin-tasks', icon: ClipboardList },
+    { label: 'Manage Staff', path: '/portal/admin-staff', icon: Users },
     { label: 'Manage People', path: '/portal/admin-people', icon: Users },
+    { label: 'Manage Clients', path: '/portal/admin-clients', icon: Users },
     { label: 'Manage Services', path: '/portal/admin-services', icon: Briefcase },
     { label: 'Manage Inquiries', path: '/portal/admin-inquiries', icon: Mail },
-    { label: 'Manage Clients', path: '/portal/admin-clients', icon: Users },
     { label: 'Manage Vouchers', path: '/portal/admin-vouchers', icon: Tag },
     { label: 'Manage Appointments', path: '/portal/admin-appointments', icon: Calendar },
     { label: 'Manage Documents', path: '/portal/admin-documents', icon: FileText },
@@ -43,7 +45,14 @@ const Sidebar: React.FC = () => {
     { label: 'Account Security', path: '/portal/account-security', icon: ShieldCheck },
   ];
 
-  const navItems = isAdmin ? adminItems : clientItems;
+  const staffItems = [
+    { label: 'Overview', path: '/portal/overview', icon: LayoutDashboard },
+    { label: 'Assigned Matters', path: '/portal/my-tasks', icon: ClipboardList },
+    { label: 'Documents', path: '/portal/documents', icon: FileText },
+    { label: 'Account Security', path: '/portal/account-security', icon: ShieldCheck },
+  ];
+
+  const navItems = isAdmin ? adminItems : (isStaff ? staffItems : clientItems);
 
   return (
     <aside className="fixed left-0 top-0 z-[100] flex h-screen w-[260px] flex-col bg-mnkhan-charcoal text-white">
@@ -59,7 +68,7 @@ const Sidebar: React.FC = () => {
       </div>
       
       <div className="flex-1 overflow-y-auto py-6">
-        {!isAdmin && (
+        {(!isAdmin && !isStaff) && (
           <div className="px-6 mb-8">
             <Link 
               to="/services" 

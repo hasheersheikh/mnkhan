@@ -10,9 +10,10 @@ import * as servicesApi from '../../api/services';
 interface OverviewProps {
   userName: string;
   isAdmin: boolean;
+  isStaff: boolean;
 }
 
-const PortalOverview: React.FC<OverviewProps> = ({ userName, isAdmin }) => {
+const PortalOverview: React.FC<OverviewProps> = ({ userName, isAdmin, isStaff }) => {
   const [tasks, setTasks] = useState<any[]>([]);
   const [inquiries, setInquiries] = useState<any[]>([]);
   const [blogs, setBlogs] = useState<any[]>([]);
@@ -32,7 +33,10 @@ const PortalOverview: React.FC<OverviewProps> = ({ userName, isAdmin }) => {
         servicesApi.getServices()
       ]);
 
-      if (tasksRes.data.success) setTasks(tasksRes.data.tasks.slice(0, 5));
+      if (tasksRes.data.success) {
+        // For staff, API might already filter, but let's be sure or allow mixed fetches if needed
+        setTasks(tasksRes.data.tasks.slice(0, 5));
+      }
       if (blogsRes.data.success) setBlogs(blogsRes.data.blogs.slice(0, 3));
       if (servicesRes.data.success) setServicesCount(servicesRes.data.services.length);
 
@@ -47,35 +51,84 @@ const PortalOverview: React.FC<OverviewProps> = ({ userName, isAdmin }) => {
     }
   };
 
-  const statCards = [
-    { label: 'Active Matters', value: tasks.length, color: 'text-mnkhan-orange' },
-    { label: 'Available Services', value: servicesCount, color: 'text-mnkhan-charcoal' },
-    { label: 'Recent Inquiries', value: isAdmin ? inquiries.length : '...', color: 'text-mnkhan-orange' },
-  ];
+  const getStatCards = () => {
+    if (isAdmin) {
+      return [
+        { label: 'Firm Matters', value: tasks.length, color: 'text-mnkhan-orange' },
+        { label: 'Active Inquiries', value: inquiries.length, color: 'text-mnkhan-charcoal' },
+        { label: 'Total Services', value: servicesCount, color: 'text-mnkhan-orange' },
+      ];
+    }
+    if (isStaff) {
+      return [
+        { label: 'Assigned Matters', value: tasks.length, color: 'text-mnkhan-orange' },
+        { label: 'Firm Knowledge', value: blogs.length, color: 'text-mnkhan-charcoal' },
+        { label: 'Available Tools', value: servicesCount, color: 'text-mnkhan-orange' },
+      ];
+    }
+    return [
+      { label: 'My Matters', value: tasks.length, color: 'text-mnkhan-orange' },
+      { label: 'Marketplace', value: servicesCount, color: 'text-mnkhan-charcoal' },
+      { label: 'Updates', value: blogs.length, color: 'text-mnkhan-orange' },
+    ];
+  };
+
+  const statCards = getStatCards();
+
+  const getSubtext = () => {
+    if (isAdmin) return 'Systems are online. Administrative overview of firm matters.';
+    if (isStaff) return 'Focusing on your assigned portfolios and professional development.';
+    return 'Your legal engagements and service portfolio overview.';
+  };
 
   return (
     <>
       <div className="mb-8 animate-in fade-in slide-in-from-top-4 duration-700">
-        <h1 className="text-4xl font-serif font-normal text-mnkhan-charcoal">
-          Welcome back, <span className="text-mnkhan-orange">{userName}</span>.
+        <h1 className="text-4xl font-serif font-normal text-mnkhan-charcoal uppercase tracking-tight">
+          {isStaff ? 'Operations' : isAdmin ? 'Registry' : 'Client'} Overview. <span className="text-mnkhan-orange italic">{userName}</span>
         </h1>
-        <p className="text-mnkhan-text-muted mt-2">
-          {isAdmin ? 'Systems are online. Administrative overview of firm matters.' : 'Here is an overview of your active matters and financial status.'}
+        <p className="text-[10px] font-bold uppercase tracking-[0.3em] text-mnkhan-text-muted mt-3 flex items-center gap-3">
+          <span className="w-8 h-[1px] bg-mnkhan-orange" />
+          {getSubtext()}
         </p>
       </div>
 
-      <div className="grid grid-cols-3 gap-6 mb-8 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-100">
         {statCards.map((stat, i) => (
-          <div key={i} className="bg-white p-6 rounded border border-mnkhan-gray-border flex flex-col items-center justify-center">
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-mnkhan-text-muted mb-2">{stat.label}</p>
-            <p className={`text-3xl font-serif italic ${stat.color}`}>{stat.value}</p>
+          <div key={i} className="bg-white p-10 rounded-sm border border-mnkhan-gray-border flex flex-col group hover:border-mnkhan-orange transition-all duration-500 shadow-sm hover:shadow-xl">
+            <p className="text-[9px] font-bold uppercase tracking-[0.3em] text-mnkhan-text-muted mb-4 group-hover:text-mnkhan-orange transition-colors">{stat.label}</p>
+            <p className={`text-4xl font-serif italic ${stat.color}`}>{stat.value}</p>
           </div>
         ))}
       </div>
       
-      <div className="grid grid-cols-12 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
+      <div className="grid grid-cols-12 gap-8 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-200">
+        {/* Matter Widget - Collaborative focused for staff, Oversight for admin */}
         <MatterWidget tasks={tasks} loading={loading} />
-        <FinancialWidget inquiries={inquiries} isAdmin={isAdmin} />
+        
+        {/* Conditional middle widget */}
+        {isAdmin ? (
+          <FinancialWidget inquiries={inquiries} isAdmin={isAdmin} />
+        ) : isStaff ? (
+          <div className="col-span-4 bg-white p-8 border border-mnkhan-gray-border rounded-sm">
+             <h3 className="text-[10px] font-bold uppercase tracking-[0.3em] text-mnkhan-charcoal mb-6 border-b border-mnkhan-gray-border pb-4">Professional Protocol</h3>
+             <ul className="space-y-4">
+                {[
+                  'Maintain confidentiality of all assigned records.',
+                  'Update matter status within 24 hours of progression.',
+                  'Utilize the firm registry for official documentation only.'
+                ].map((rule, idx) => (
+                  <li key={idx} className="text-xs text-mnkhan-text-muted flex gap-3 italic">
+                    <span className="text-mnkhan-orange font-bold font-mono">{idx + 1}.</span>
+                    {rule}
+                  </li>
+                ))}
+             </ul>
+          </div>
+        ) : (
+          <FinancialWidget inquiries={[]} isAdmin={false} />
+        )}
+
         <InsightsWidget blogs={blogs} loading={loading} />
       </div>
     </>

@@ -4,6 +4,8 @@ import { ArrowLeft, LayoutDashboard, FileText } from 'lucide-react';
 import * as tasksApi from '../../api/tasks';
 import MatterOverview from '../../components/Dashboard/MatterOverview';
 import MatterDocuments from '../../components/Dashboard/MatterDocuments';
+import StaffAssignmentModal from '../../components/Dashboard/StaffAssignmentModal';
+import { UserPlus } from 'lucide-react';
 
 const TaskDetails: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -12,12 +14,16 @@ const TaskDetails: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'documents'>('overview');
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isStaff, setIsStaff] = useState(false);
+  const [isAssignmentModalOpen, setIsAssignmentModalOpen] = useState(false);
 
   useEffect(() => {
     const userStr = localStorage.getItem('mnkhan_user');
     if (userStr) {
       const user = JSON.parse(userStr);
-      setIsAdmin(user.role === 'admin');
+      const userRole = user.role;
+      setIsAdmin(['admin', 'super-admin'].includes(userRole));
+      setIsStaff(userRole === 'staff');
     }
   }, []);
 
@@ -97,14 +103,31 @@ const TaskDetails: React.FC = () => {
               <p className="text-[10px] font-bold uppercase tracking-widest text-mnkhan-text-muted">Status: <span className="text-mnkhan-charcoal font-black">{task.status}</span></p>
               <div className="w-1 h-1 rounded-full bg-mnkhan-gray-border" />
               <p className="text-[10px] font-bold uppercase tracking-widest text-mnkhan-text-muted">Matter ID: <span className="text-mnkhan-charcoal opacity-60">#{task._id.slice(-8).toUpperCase()}</span></p>
+              {task.amountPaid && !isStaff && (
+                <>
+                  <div className="w-1 h-1 rounded-full bg-mnkhan-gray-border" />
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-mnkhan-text-muted">Amount Paid: <span className="text-mnkhan-charcoal font-black">₹{task.amountPaid.toLocaleString()}</span></p>
+                </>
+              )}
             </div>
           </div>
         </div>
         
         <div className="flex flex-col items-end gap-4">
-          <div className="text-right hidden sm:block">
-            <p className="text-[9px] font-bold uppercase tracking-widest text-mnkhan-text-muted mb-1">Finalized on</p>
-            <p className="text-xs font-serif italic text-mnkhan-charcoal">{new Date(task.updatedAt).toLocaleDateString(undefined, { day: '2-digit', month: 'long', year: 'numeric' })}</p>
+          <div className="flex items-center gap-3">
+            {isAdmin && (
+              <button
+                onClick={() => setIsAssignmentModalOpen(true)}
+                className="flex items-center gap-2 px-6 py-3 bg-white border border-mnkhan-charcoal text-mnkhan-charcoal text-[10px] font-bold uppercase tracking-widest hover:bg-mnkhan-charcoal hover:text-white transition-all rounded-sm shadow-sm"
+              >
+                <UserPlus size={14} />
+                Assign Staff
+              </button>
+            )}
+            <div className="text-right hidden sm:block">
+              <p className="text-[9px] font-bold uppercase tracking-widest text-mnkhan-text-muted mb-1">Finalized on</p>
+              <p className="text-xs font-serif italic text-mnkhan-charcoal">{new Date(task.updatedAt).toLocaleDateString(undefined, { day: '2-digit', month: 'long', year: 'numeric' })}</p>
+            </div>
           </div>
           
           {/* Tab Selection Navigation */}
@@ -149,9 +172,23 @@ const TaskDetails: React.FC = () => {
           <MatterDocuments 
             taskId={task._id}
             isAdmin={isAdmin}
+            isStaff={isStaff}
           />
         )}
       </div>
+
+      <StaffAssignmentModal
+        isOpen={isAssignmentModalOpen}
+        onClose={() => setIsAssignmentModalOpen(false)}
+        onAssign={async (staffId) => {
+          const res = await tasksApi.updateTask(task._id, { assignedStaffId: staffId });
+          if (res.data.success) {
+            setTask(res.data.task);
+            alert('Staff assigned successfully.');
+          }
+        }}
+        currentStaffId={task.assignedStaffId}
+      />
     </div>
   );
 };

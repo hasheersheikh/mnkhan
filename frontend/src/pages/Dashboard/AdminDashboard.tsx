@@ -34,6 +34,7 @@ const AdminDashboard: React.FC = () => {
               { to: '/portal/admin-services', label: 'Services', icon: Briefcase },
               { to: '/portal/admin-inquiries', label: 'Enquiries', icon: Mail },
               { to: '/portal/admin-vouchers', label: 'Vouchers', icon: Tag },
+              { to: '/portal/admin-staff', label: 'Staff members', icon: Users },
               { to: '/portal/admin-people', label: 'Team', icon: Users },
             ].map((link) => (
               <NavLink 

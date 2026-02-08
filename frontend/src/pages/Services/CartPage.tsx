@@ -13,6 +13,10 @@ const CartPage: React.FC = () => {
   const [voucherError, setVoucherError] = useState('');
   const navigate = useNavigate();
 
+  const userRole = JSON.parse(localStorage.getItem('mnkhan_user') || '{}').role;
+  const isInternal = ['admin', 'super-admin', 'staff'].includes(userRole);
+  const isStaff = userRole === 'staff';
+
   const fetchCart = async () => {
     try {
       const res = await getCart();
@@ -159,9 +163,11 @@ const CartPage: React.FC = () => {
                       </p>
                     </div>
                     <div className="flex flex-row md:flex-col items-center md:items-end gap-6 md:gap-2 min-w-fit">
-                      <p className="text-xl font-bold text-mnkhan-charcoal font-serif">
-                        ₹{(Number((item.price || "0").toString().replace(/[^0-9.]/g, "")) || 0).toLocaleString('en-IN')}
-                      </p>
+                      {!isStaff && (
+                        <p className="text-xl font-bold text-mnkhan-charcoal font-serif">
+                          ₹{(Number((item.price || "0").toString().replace(/[^0-9.]/g, "")) || 0).toLocaleString('en-IN')}
+                        </p>
+                      )}
                       <button 
                         onClick={() => handleRemove(item._id)}
                         className="text-[10px] font-bold text-red-600 uppercase tracking-widest hover:underline decoration-2 underline-offset-4"
@@ -227,22 +233,26 @@ const CartPage: React.FC = () => {
                           </span>
                         </div>
                       )}
-                      <span className="text-5xl md:text-6xl font-bold font-serif italic text-mnkhan-orange">
-                        ₹{(voucherData 
-                          ? Math.max(0, total - (voucherData.discountType === 'percentage' ? (total * voucherData.discountValue / 100) : voucherData.discountValue))
-                          : total
-                        ).toLocaleString('en-IN')}
-                      </span>
+                      {!isStaff && (
+                        <span className="text-5xl md:text-6xl font-bold font-serif italic text-mnkhan-orange">
+                          ₹{(voucherData 
+                            ? Math.max(0, total - (voucherData.discountType === 'percentage' ? (total * voucherData.discountValue / 100) : voucherData.discountValue))
+                            : total
+                          ).toLocaleString('en-IN')}
+                        </span>
+                      )}
                     </div>
                   </div>
 
-                  <button
-                    disabled={processing}
-                    onClick={handleCheckout}
-                    className="w-full py-7 bg-mnkhan-orange text-white text-[12px] font-bold uppercase tracking-[0.5em] hover:bg-white hover:text-mnkhan-charcoal transition-all duration-700 disabled:opacity-50 shadow-2xl shadow-mnkhan-orange/20"
-                  >
-                    {processing ? 'Processing...' : 'Authorize & Procure'}
-                  </button>
+                  {!isInternal && (
+                    <button
+                      disabled={processing}
+                      onClick={handleCheckout}
+                      className="w-full py-7 bg-mnkhan-orange text-white text-[12px] font-bold uppercase tracking-[0.5em] hover:bg-white hover:text-mnkhan-charcoal transition-all duration-700 disabled:opacity-50 shadow-2xl shadow-mnkhan-orange/20"
+                    >
+                      {processing ? 'Processing...' : 'Authorize & Procure'}
+                    </button>
+                  )}
 
                   <div className="mt-8 flex justify-center lg:justify-start gap-8 border-t border-white/5 pt-8">
                     <div className="text-center lg:text-left">

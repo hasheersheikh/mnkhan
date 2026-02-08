@@ -6,6 +6,8 @@ import { Briefcase, ChevronRight, Gavel, Loader2, Scale } from 'lucide-react';
 const MyTasks: React.FC = () => {
   const [tasks, setTasks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const userRole = JSON.parse(localStorage.getItem('mnkhan_user') || '{}').role;
+  const isStaff = userRole === 'staff';
 
   useEffect(() => {
     fetchTasks();
@@ -43,7 +45,9 @@ const MyTasks: React.FC = () => {
             <div className="w-1.5 h-1.5 rounded-full bg-mnkhan-orange animate-pulse" />
             <p className="text-[10px] font-bold uppercase tracking-[0.4em] text-mnkhan-text-muted">Institutional Procedural Registry</p>
           </div>
-          <h2 className="text-5xl font-serif italic text-mnkhan-charcoal leading-tight">My Matters & <span className="text-mnkhan-orange">Case Progress</span></h2>
+          <h2 className="text-5xl font-serif italic text-mnkhan-charcoal leading-tight">
+            {isStaff ? 'Assigned Matters' : 'My Matters'} & <span className="text-mnkhan-orange">Case Progress</span>
+          </h2>
         </div>
         <div className="flex items-center gap-4 px-6 py-3 bg-mnkhan-charcoal text-white rounded-sm border border-mnkhan-charcoal shadow-2xl scale-105 origin-right">
           <Scale size={18} className="text-mnkhan-orange" />

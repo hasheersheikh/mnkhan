@@ -14,6 +14,10 @@ const ServicesPage: React.FC = () => {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const userRole = JSON.parse(localStorage.getItem('mnkhan_user') || '{}').role;
+  const isInternal = ['admin', 'super-admin', 'staff'].includes(userRole);
+  const isStaff = userRole === 'staff';
+
   useEffect(() => {
     getServices()
       .then(res => {
@@ -65,13 +69,14 @@ const ServicesPage: React.FC = () => {
               </p>
               
               <div className="mt-8 pt-8 border-t border-mnkhan-gray-border flex items-center justify-between">
-                <div>
-                  {service.price && <p className="text-[10px] font-bold uppercase tracking-widest text-mnkhan-text-muted mb-1">Professional Fee</p>}
-                  <p className="text-2xl font-bold text-mnkhan-charcoal">
-                    {service.price ? `₹${service.price}` : ''}
-                  </p>
-                </div>
-              
+                {!isStaff && (
+                  <div>
+                    {service.price && <p className="text-[10px] font-bold uppercase tracking-widest text-mnkhan-text-muted mb-1">Professional Fee</p>}
+                    <p className="text-2xl font-bold text-mnkhan-charcoal">
+                      {service.price ? `₹${service.price}` : ''}
+                    </p>
+                  </div>
+                )}
               </div>
                 <div className="flex flex-col sm:flex-row gap-3 mt-4">
                   <Link 
@@ -80,7 +85,7 @@ const ServicesPage: React.FC = () => {
                   >
                     Details
                   </Link>
-                  {localStorage.getItem('mnkhan_token') && (
+                  {localStorage.getItem('mnkhan_token') && !isInternal && (
                     <button 
                       onClick={(e) => {
                         e.preventDefault();

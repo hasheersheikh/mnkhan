@@ -33,10 +33,18 @@ const TaskSchema = new mongoose.Schema({
     ref: "AdminUser",
     required: true,
   },
+  assignedStaffId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "AdminUser",
+  },
+  amountPaid: { 
+    type: Number, 
+    default: 0 
+  },
   comments: [
     {
       senderId: { type: mongoose.Schema.Types.ObjectId, required: true },
-      senderRole: { type: String, enum: ["client", "admin"], required: true },
+      senderRole: { type: String, enum: ["client", "admin", "staff"], required: true },
       text: { type: String, required: true },
       date: { type: Date, default: Date.now },
     },

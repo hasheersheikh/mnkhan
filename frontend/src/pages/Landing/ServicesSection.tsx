@@ -38,6 +38,9 @@ const ServicesSection: React.FC = () => {
 
   const displayedServices = showAll ? services : services.slice(0, 3);
 
+  const userRole = JSON.parse(localStorage.getItem('mnkhan_user') || '{}').role;
+  const isStaff = userRole === 'staff';
+
   return (
     <section id="services" className="py-24 px-8 bg-white relative">
       <div className="max-w-7xl mx-auto">
@@ -65,9 +68,11 @@ const ServicesSection: React.FC = () => {
               <p className="text-mnkhan-text-muted leading-relaxed text-sm mb-6">
                 {service.description}
               </p>
-              <p className="text-lg font-bold text-mnkhan-charcoal mb-8">
-                <span className="text-mnkhan-orange">{service.price}</span>
-              </p>
+              {!isStaff && (
+                <p className="text-lg font-bold text-mnkhan-charcoal mb-8">
+                  <span className="text-mnkhan-orange">{service.price}</span>
+                </p>
+              )}
               <div className="mt-auto flex items-center text-xs font-bold uppercase tracking-widest text-mnkhan-orange opacity-0 group-hover:opacity-100 transition-all duration-500 translate-y-2 group-hover:translate-y-0">
                 View Details <span className="ml-2">→</span>
               </div>

@@ -11,6 +11,7 @@ import PrivacyPolicy from './pages/Legal/PrivacyPolicy';
 import PublicLayout from './components/Common/Layout/PublicLayout';
 import ManageTasks from './pages/Dashboard/ManageTasks';
 import ManagePeople from './pages/Dashboard/ManagePeople';
+import ManageStaff from './pages/Dashboard/ManageStaff';
 import ManageServices from './pages/Dashboard/ManageServices';
 import ManageInquiries from './pages/Dashboard/ManageInquiries';
 import ManageBlogs from './pages/Dashboard/ManageBlogs';
@@ -65,7 +66,8 @@ const App: React.FC = () => {
   const PortalOverviewWrapper = () => {
     const user = JSON.parse(localStorage.getItem('mnkhan_user') || '{}');
     const isAdmin = ['admin', 'super-admin'].includes(user?.role);
-    return <PortalOverview userName={user?.name || 'Client'} isAdmin={isAdmin} />;
+    const isStaff = user?.role === 'staff';
+    return <PortalOverview userName={user?.name || 'Client'} isAdmin={isAdmin} isStaff={isStaff} />;
   };
 
   return (
@@ -117,6 +119,7 @@ const App: React.FC = () => {
             <Route path="admin-tasks" element={<ManageTasks />} />
             <Route path="admin-tasks/:id" element={<TaskDetails />} />
             <Route path="admin-people" element={<ManagePeople />} />
+            <Route path="admin-staff" element={<ManageStaff />} />
             <Route path="admin-services" element={<ManageServices />} />
             <Route path="admin-inquiries" element={<ManageInquiries />} />
             <Route path="admin-appointments" element={<ManageAppointments />} />
