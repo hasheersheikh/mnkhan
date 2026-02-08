@@ -81,6 +81,7 @@ router.post("/", async (req, res) => {
     }
 
     // Check for Razorpay bypass (Dev Mode)
+    console.log("[Appointment] BYPASS_PAYMENT value:", process.env.BYPASS_PAYMENT, typeof process.env.BYPASS_PAYMENT);
     if (process.env.BYPASS_PAYMENT === "true") {
       console.log(
         "[Appointment] Bypassing Razorpay payment for dev environment",

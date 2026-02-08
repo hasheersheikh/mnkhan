@@ -1,4 +1,4 @@
-require("dotenv").config();
+require("dotenv").config({ override: true });
 const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
@@ -17,6 +17,8 @@ const documentRoutes = require("./routes/documents");
 const voucherRoutes = require("./routes/vouchers");
 
 const app = express();
+console.log("[Startup] BYPASS_PAYMENT status:", process.env.BYPASS_PAYMENT);
+console.log("[Startup] NODE_ENV status:", process.env.NODE_ENV);
 const PORT = process.env.PORT || 5001;
 const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/mnkhan";
 
