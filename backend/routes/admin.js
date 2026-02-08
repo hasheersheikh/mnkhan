@@ -213,7 +213,35 @@ router.patch(
     } catch (err) {
       res.status(500).json({ success: false, message: err.message });
     }
-  },
+  }
+);
+
+// Admin: Reset client password
+router.post(
+  "/users/:id/reset-password",
+  authenticateToken,
+  authorizeRole(["admin", "super-admin"]),
+  async (req, res) => {
+    try {
+      const { password } = req.body;
+      if (!password) {
+        return res.status(400).json({ success: false, message: "New password is required" });
+      }
+
+      const user = await User.findById(req.params.id);
+      if (!user) {
+        return res.status(404).json({ success: false, message: "User not found" });
+      }
+
+      user.password = password; // Hashed by pre-save hook
+      await user.save();
+
+      console.log(`[Admin] Forced password reset for client: ${user.email}`);
+      res.json({ success: true, message: "Client password has been successfully reset" });
+    } catch (err) {
+      res.status(500).json({ success: false, message: err.message });
+    }
+  }
 );
 
 module.exports = router;

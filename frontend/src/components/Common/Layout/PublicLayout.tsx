@@ -4,10 +4,11 @@ import PublicNavbar from '../Navigation/PublicNavbar';
 
 interface PublicLayoutProps {
   onLogin: () => void;
+  onLogout: () => void;
   isAuthenticated: boolean;
 }
 
-const PublicLayout: React.FC<PublicLayoutProps> = ({ onLogin, isAuthenticated }) => {
+const PublicLayout: React.FC<PublicLayoutProps> = ({ onLogin, onLogout, isAuthenticated }) => {
   const [showLogin, setShowLogin] = useState(false);
 
   return (
@@ -16,13 +17,14 @@ const PublicLayout: React.FC<PublicLayoutProps> = ({ onLogin, isAuthenticated })
         <PublicNavbar 
           isAuthenticated={isAuthenticated}
           onLoginSuccess={onLogin} 
+          onLogout={onLogout}
           showLogin={showLogin} 
           setShowLogin={setShowLogin} 
         />
       </div>
       
       <main className="flex-1 pt-[88px]">
-        <Outlet context={{ setShowLogin }} />
+        <Outlet context={{ setShowLogin, isAuthenticated }} />
       </main>
 
       <footer className="relative z-10 bg-mnkhan-charcoal text-white py-12 px-8">

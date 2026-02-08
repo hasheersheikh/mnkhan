@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router';
 import { login, signup } from '../../api/auth';
 
 interface LoginProps {
@@ -7,6 +8,7 @@ interface LoginProps {
 }
 
 const Login: React.FC<LoginProps> = ({ onClose, onSuccess }) => {
+  const navigate = useNavigate();
   const [isSignup, setIsSignup] = useState(false);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
@@ -54,6 +56,7 @@ const Login: React.FC<LoginProps> = ({ onClose, onSuccess }) => {
           } else {
             localStorage.setItem('mnkhan_token', data.token);
             localStorage.setItem('mnkhan_user', JSON.stringify(data.user));
+            navigate('/portal/overview');
             onSuccess();
           }
         } else {

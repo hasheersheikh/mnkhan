@@ -8,7 +8,7 @@ const DocumentSchema = new mongoose.Schema({
     required: true,
   },
 
-  // Optional: Link to specific appointment/service
+  // Optional: Link to specific appointment/service/task
   appointmentId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Appointment",
@@ -16,6 +16,10 @@ const DocumentSchema = new mongoose.Schema({
   serviceId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: "Service",
+  },
+  taskId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Task",
   },
 
   // File metadata
@@ -55,6 +59,7 @@ const DocumentSchema = new mongoose.Schema({
 // Indexes for efficient queries
 DocumentSchema.index({ userId: 1 });
 DocumentSchema.index({ appointmentId: 1 });
+DocumentSchema.index({ taskId: 1 });
 DocumentSchema.index({ status: 1 });
 
 // Update timestamp on save

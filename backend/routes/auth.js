@@ -117,18 +117,50 @@ router.post("/reset-password", async (req, res) => {
     }
 
     // In a real application, you would generate a one-time token
-    // and send an actual email via SendGrid/Nodemailer.
-    // For this simulation, we'll return a success message.
+    // (e.g. crypto.randomBytes(20).toString('hex')) and store its hash + expiry in the User model.
+    // For this simulation/demo version, we'll generate a JWT reset token.
+    const resetToken = jwt.sign({ id: user._id, purpose: 'password_reset' }, JWT_SECRET, { expiresIn: '15m' });
+    const resetLink = `http://localhost:5173/reset-password?token=${resetToken}`;
+
+    console.log(`[AUTH] Password Reset URL: ${resetLink}`);
+
     res.json({
       success: true,
-      message: `Password reset instructions sent to ${email} (Simulation)`,
+      message: `Password reset instructions sent to ${email}`,
+      link: resetLink // Providing link directly for development ease
     });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
 });
 
-// Update Password (Actually change it)
+// Update Password (Actually change it using token)
+router.post("/reset-password-confirmed", async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+    
+    // Verify token
+    const decoded = jwt.verify(token, JWT_SECRET);
+    if (!decoded || decoded.purpose !== 'password_reset') {
+      return res.status(400).json({ success: false, message: "Invalid or expired reset token" });
+    }
+
+    const user = await User.findById(decoded.id);
+    if (!user) {
+      return res.status(404).json({ success: false, message: "User no longer exists" });
+    }
+
+    user.password = newPassword; // Pre-save hook will hash it
+    await user.save();
+
+    res.json({ success: true, message: "Password updated successfully. You can now login with your new credentials." });
+  } catch (err) {
+    const msg = err.name === 'TokenExpiredError' ? "Reset token has expired" : err.message;
+    res.status(400).json({ success: false, message: msg });
+  }
+});
+
+// Update Password (Authenticated change - already exists)
 router.post("/update-password", async (req, res) => {
   try {
     const { email, newPassword } = req.body;

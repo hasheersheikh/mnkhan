@@ -91,7 +91,7 @@ router.post(
   async (req, res) => {
     try {
       const file = req.file;
-      const { appointmentId, serviceId, category } = req.body;
+      const { appointmentId, serviceId, taskId, category } = req.body;
       const userId = req.user._id;
 
       // Validate file
@@ -121,6 +121,7 @@ router.post(
         userId,
         appointmentId: appointmentId || undefined,
         serviceId: serviceId || undefined,
+        taskId: taskId || undefined,
         fileName,
         originalName: file.originalname,
         fileType,
@@ -167,11 +168,13 @@ router.post(
 router.get("/", authenticateToken, async (req, res) => {
   try {
     const userId = req.user._id;
-    const { appointmentId, category, status } = req.query;
+    const { appointmentId, serviceId, taskId, category, status } = req.query;
 
     // Build query
     const query = { userId };
     if (appointmentId) query.appointmentId = appointmentId;
+    if (serviceId) query.serviceId = serviceId;
+    if (taskId) query.taskId = taskId;
     if (category) query.category = category;
     if (status) query.status = status;
 

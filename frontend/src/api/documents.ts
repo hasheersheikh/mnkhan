@@ -5,6 +5,7 @@ export interface Document {
   userId: string;
   appointmentId?: string;
   serviceId?: string;
+  taskId?: string;
   fileName: string;
   originalName: string;
   fileType: 'pdf' | 'jpg' | 'jpeg' | 'png';
@@ -22,6 +23,7 @@ export interface UploadDocumentParams {
   file: File;
   appointmentId?: string;
   serviceId?: string;
+  taskId?: string;
   category?: Document['category'];
 }
 
@@ -31,6 +33,7 @@ export const uploadDocument = async (params: UploadDocumentParams) => {
   formData.append('file', params.file);
   if (params.appointmentId) formData.append('appointmentId', params.appointmentId);
   if (params.serviceId) formData.append('serviceId', params.serviceId);
+  if (params.taskId) formData.append('taskId', params.taskId);
   if (params.category) formData.append('category', params.category);
 
   const response = await client.post('/documents/upload', formData, {
@@ -44,6 +47,8 @@ export const uploadDocument = async (params: UploadDocumentParams) => {
 // Get current user's documents
 export const getMyDocuments = async (params?: {
   appointmentId?: string;
+  serviceId?: string;
+  taskId?: string;
   category?: string;
   status?: string;
 }) => {

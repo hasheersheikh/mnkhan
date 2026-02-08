@@ -126,6 +126,7 @@ const initiateRefund = async (paymentId, amount = null) => {
 };
 
 module.exports = {
+  instance: getRazorpay(),
   createOrder,
   verifyPaymentSignature,
   verifyWebhookSignature,

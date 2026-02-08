@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router';
 import { getServiceById } from '../../api/services';
+import { addToCart } from '../../api/cart';
 import InquiryForm from '../Landing/InquiryForm';
 
 interface Service {
@@ -68,9 +69,23 @@ const ServiceDetailPage: React.FC = () => {
             ← All Services
           </Link>
           <h1 className="text-5xl md:text-6xl font-serif italic mb-6">{service.name}</h1>
-          <p className="text-2xl font-bold text-mnkhan-orange mb-8">
-            {service.price ? `₹${service.price}` : 'Login for price'}
-          </p>
+          <div className="flex flex-col sm:flex-row gap-4 mb-10">
+            <p className="text-3xl font-bold text-mnkhan-orange">
+              {service.price ? `₹${service.price}` : 'Login for price'}
+            </p>
+            {localStorage.getItem('mnkhan_token') && service.price && (
+              <button 
+                onClick={() => {
+                  addToCart(service._id)
+                    .then(() => alert(`${service.name} added to cart!`))
+                    .catch(() => alert('Failed to add to cart. Maybe already added?'));
+                }}
+                className="bg-white text-mnkhan-charcoal px-8 py-3 font-bold uppercase tracking-widest text-[10px] hover:bg-mnkhan-orange hover:text-white transition-all rounded-sm shadow-xl shadow-black/20"
+              >
+                Add to Cart
+              </button>
+            )}
+          </div>
           <p className="text-xl text-white/60 max-w-3xl leading-relaxed">
             {service.description}
           </p>

@@ -10,6 +10,8 @@ router.get("/", authenticateToken, async (req, res) => {
     let query = {};
     if (req.user.role === "client") {
       query = { userId: req.user._id };
+    } else if (req.query.userId) {
+      query = { userId: req.query.userId };
     }
 
     const tasks = await Task.find(query)
@@ -189,5 +191,44 @@ router.delete(
     }
   },
 );
+
+// Add comment to task
+router.post("/:id/comments", authenticateToken, async (req, res) => {
+  try {
+    const { text } = req.body;
+    if (!text) {
+      return res.status(400).json({ success: false, message: "Comment text is required" });
+    }
+
+    const task = await Task.findById(req.params.id);
+    if (!task) {
+      return res.status(404).json({ success: false, message: "Task not found" });
+    }
+
+    // Authorization: only the assigned client or an admin can comment
+    if (req.user.role === "client" && task.userId.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ success: false, message: "Forbidden" });
+    }
+
+    const comment = {
+      senderId: req.user._id,
+      senderRole: req.user.role === "client" ? "client" : "admin",
+      text,
+      date: new Date()
+    };
+
+    task.comments.push(comment);
+    await task.save();
+
+    // Return populated task for frontend UI update
+    const updatedTask = await Task.findById(req.params.id)
+      .populate("userId", "name email")
+      .populate("adminId", "name");
+
+    res.json({ success: true, task: updatedTask });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
 
 module.exports = router;

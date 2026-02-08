@@ -3,7 +3,7 @@ import { Link } from 'react-router';
 import { getServices } from '../../api/services';
 
 interface Service {
-  id: string;
+  _id: string;
   name: string;
   description: string;
   price: string;
@@ -56,8 +56,8 @@ const ServicesSection: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
           {displayedServices.map(service => (
             <Link 
-              to={`/services/${service.id}`}
-              key={service.id} 
+              to={`/services/${service._id}`}
+              key={service._id} 
               className="group p-10 border border-mnkhan-gray-border bg-[#FAFAFA] hover:bg-white hover:border-mnkhan-orange hover:shadow-2xl transition-all duration-500 rounded-sm flex flex-col"
             >
               <div className="w-12 h-[2px] bg-mnkhan-orange mb-8 group-hover:w-full transition-all duration-500" />

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { getServices } from '../../api/services';
+import { addToCart } from '../../api/cart';
 
 interface Service {
   _id: string;
@@ -53,8 +54,7 @@ const ServicesPage: React.FC = () => {
       <section className="max-w-7xl mx-auto px-8 -mt-16 relative z-20">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {services.map(service => (
-            <Link 
-              to={`/services/${service._id}`}
+            <div 
               key={service._id} 
               className="bg-white border border-mnkhan-gray-border p-10 shadow-sm hover:shadow-2xl hover:border-mnkhan-orange transition-all duration-500 flex flex-col group rounded-sm"
             >
@@ -71,11 +71,31 @@ const ServicesPage: React.FC = () => {
                     {service.price ? `₹${service.price}` : ''}
                   </p>
                 </div>
-                <div className="bg-mnkhan-charcoal text-white px-6 py-3 font-bold uppercase tracking-widest text-xs group-hover:bg-mnkhan-orange transition-colors">
-                  Details
-                </div>
+              
               </div>
-            </Link>
+                <div className="flex flex-col sm:flex-row gap-3 mt-4">
+                  <Link 
+                    to={`/services/${service._id}`}
+                    className="bg-mnkhan-charcoal text-white px-6 py-3 font-bold uppercase tracking-widest text-[10px] hover:bg-mnkhan-orange transition-colors text-center"
+                  >
+                    Details
+                  </Link>
+                  {localStorage.getItem('mnkhan_token') && (
+                    <button 
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        addToCart(service._id)
+                          .then(() => alert(`${service.name} added to cart!`))
+                          .catch(() => alert('Failed to add to cart. Maybe already added?'));
+                      }}
+                      className="border border-mnkhan-charcoal text-mnkhan-charcoal px-6 py-3 font-bold uppercase tracking-widest text-[10px] hover:bg-mnkhan-charcoal hover:text-white transition-all"
+                    >
+                      Add to Cart
+                    </button>
+                  )}
+                </div>
+            </div>
           ))}
         </div>
       </section>

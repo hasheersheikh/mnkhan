@@ -532,11 +532,113 @@ const sendAccountDeactivationEmail = async (user) => {
   }
 };
 
+/**
+ * Send service purchase confirmation email
+ * @param {object} user - User details
+ * @param {Array} services - List of services purchased
+ * @param {number} totalAmount - Total amount paid (in paise)
+ * @param {string} orderId - Razorpay Order ID
+ * @returns {Promise<object>} Email send result
+ */
+const sendServiceConfirmationEmail = async (user, services, totalAmount, orderId) => {
+  try {
+    const transporter = createTransporter();
+    const { name, email } = user;
+
+    const formattedAmount = (totalAmount / 100).toLocaleString("en-IN", {
+      style: "currency",
+      currency: "INR",
+    });
+
+    const emailHtml = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Service Purchase Confirmed</title>
+    </head>
+    <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+      <div style="background: #333132; padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
+        <h1 style="color: white; margin: 0; font-size: 24px; font-style: italic;">MN Khan & Associates</h1>
+        <p style="color: #ff4612; margin: 5px 0 0 0; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; font-size: 10px;">Legal Excellence</p>
+      </div>
+      
+      <div style="background: #fdfdfd; padding: 30px; border-radius: 0 0 10px 10px; border: 1px solid #eee; border-top: none;">
+        <p style="font-size: 18px; margin-top: 0;">Hello <strong>${name}</strong>,</p>
+        
+        <p>Thank you for choosing MN Khan. Your payment for the following legal services has been confirmed. Our team has been notified and we are already preparing your matters.</p>
+        
+        <div style="margin: 25px 0; border: 1px solid #f0f0f0; border-radius: 5px; overflow: hidden;">
+          <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+              <tr style="background: #f8f8f8;">
+                <th style="padding: 12px; text-align: left; font-size: 12px; text-transform: uppercase; color: #666; width: 70%;">Service Detail</th>
+                <th style="padding: 12px; text-align: right; font-size: 12px; text-transform: uppercase; color: #666;">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${services.map(s => `
+                <tr style="border-bottom: 1px solid #f0f0f0;">
+                  <td style="padding: 12px; font-size: 14px;"><strong>${s.name}</strong></td>
+                  <td style="padding: 12px; text-align: right; font-size: 12px; color: #ff4612; font-weight: bold;">QUEUED</td>
+                </tr>
+              `).join('')}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td style="padding: 12px; text-align: right; font-weight: bold;">Total Paid:</td>
+                <td style="padding: 12px; text-align: right; font-weight: bold; color: #333;">${formattedAmount}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <div style="background: #f8f8f8; padding: 15px; border-radius: 5px; margin-bottom: 25px;">
+          <p style="margin: 0; font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 1px;">Order Reference</p>
+          <p style="margin: 5px 0 0 0; font-family: monospace; font-size: 14px; font-weight: bold;">${orderId}</p>
+        </div>
+        
+        <p style="font-size: 14px; color: #444;">You can track the progress of your legal matters in real-time via your client portal. Click the button below to access your dashboard.</p>
+        
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="${process.env.FRONTEND_URL || "http://localhost:5173"}/portal" style="display: inline-block; background: #ff4612; color: white; padding: 12px 35px; text-decoration: none; border-radius: 2px; font-weight: bold; text-transform: uppercase; font-size: 12px; letter-spacing: 1px;">Access Portal</a>
+        </div>
+        
+        <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+        
+        <p style="color: #666; font-size: 12px; text-align: center; margin-bottom: 0;">
+          Legal Disclaimer: This email is an automated confirmation of service purchase. Service delivery is subject to documentation review. <br>
+          <strong>MN Khan & Associates</strong>
+        </p>
+      </div>
+    </body>
+    </html>
+    `;
+
+    const mailOptions = {
+      from: process.env.SMTP_FROM || process.env.SMTP_USER,
+      to: email,
+      subject: `Service Confirmation - Order ${orderId.slice(-8).toUpperCase()}`,
+      html: emailHtml,
+    };
+
+    const result = await transporter.sendMail(mailOptions);
+    console.log("[Email] Service confirmation sent:", result.messageId);
+    return result;
+  } catch (error) {
+    console.error("[Email] Error sending service confirmation:", error);
+    // Don't throw, we don't want to break the payment flow if email fails
+    return null;
+  }
+};
+
 module.exports = {
   sendConfirmationEmail,
   sendCancellationEmail,
   sendRescheduleEmail,
   sendAccountActivationEmail,
   sendAccountDeactivationEmail,
+  sendServiceConfirmationEmail,
   generateICSFile,
 };

@@ -5,7 +5,7 @@ import InquiryForm from './InquiryForm';
 import { getBlogs } from '../../api/blogs';
 
 const LandingPage: React.FC = () => {
-  const { setShowLogin } = useOutletContext<{ setShowLogin: (show: boolean) => void }>();
+  const { setShowLogin, isAuthenticated } = useOutletContext<{ setShowLogin: (show: boolean) => void, isAuthenticated: boolean }>();
   const [blogs, setBlogs] = useState<any[]>([]);
   const [visibleCount, setVisibleCount] = useState(3);
   const [loading, setLoading] = useState(true);
@@ -49,7 +49,7 @@ const LandingPage: React.FC = () => {
               </span>
             </div>
 
-            <h1 className="text-7xl md:text-8xl leading-none font-normal mb-8 tracking-tight">
+            <h1 className="text-5xl sm:text-7xl md:text-8xl leading-none font-normal mb-8 tracking-tight">
               Defining the <br />
               <span className="text-mnkhan-orange italic serif font-normal">Future</span> of Law.
             </h1>
@@ -59,22 +59,24 @@ const LandingPage: React.FC = () => {
               We partner with clients to navigate complex challenges and seize opportunities.
             </p>
 
-            <div className="flex gap-4">
+            <div className="flex flex-col sm:flex-row gap-4">
               <a href="#services" className="border-2 border-mnkhan-charcoal px-8 py-4 font-bold hover:bg-mnkhan-charcoal hover:text-white transition-all text-center">
                 Our Expertise
               </a>
-              <button 
-                onClick={() => setShowLogin(true)}
-                className="text-mnkhan-charcoal font-bold flex items-center gap-2 group underline-offset-4 hover:underline"
-              >
-                Client Access Portal 
-                <span className="group-hover:translate-x-1 transition-transform">→</span>
-              </button>
+              {!isAuthenticated && (
+                <button 
+                  onClick={() => setShowLogin(true)}
+                  className="text-mnkhan-charcoal font-bold flex items-center justify-center gap-2 group underline-offset-4 hover:underline py-4"
+                >
+                  Client Access Portal 
+                  <span className="group-hover:translate-x-1 transition-transform">→</span>
+                </button>
+              )}
             </div>
           </div>
 
           {/* Right Sidebar - Locations & CTA */}
-          <div className="hidden lg:block lg:col-span-4 space-y-8">
+          <div className="col-span-12 lg:col-span-4 space-y-8">
             <div className="p-8 border border-mnkhan-gray-border bg-white/50 backdrop-blur-md rounded-lg shadow-sm">
               <h3 className="font-serif text-2xl mb-4">Our Offices</h3>
               <div className="space-y-4">
@@ -117,12 +119,14 @@ const LandingPage: React.FC = () => {
                  >
                    Book Appointment →
                  </Link>
-                 <button 
-                  onClick={() => setShowLogin(true)}
-                  className="w-full mt-3 border border-white/30 py-3 font-bold hover:bg-white/10 transition-colors"
-                 >
-                   Client Portal
-                 </button>
+                 {!isAuthenticated && (
+                   <button 
+                    onClick={() => setShowLogin(true)}
+                    className="w-full mt-3 border border-white/30 py-3 font-bold hover:bg-white/10 transition-colors"
+                   >
+                     Client Portal
+                   </button>
+                 )}
                </div>
                {/* Decorative Background Element */}
                <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-mnkhan-orange rounded-full blur-3xl opacity-20" />

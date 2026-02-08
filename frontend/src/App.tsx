@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router';
 import Dashboard from './pages/Dashboard/Dashboard';
 import LandingPage from './pages/Landing/LandingPage';
@@ -17,6 +17,7 @@ import ManageBlogs from './pages/Dashboard/ManageBlogs';
 import MyInquiries from './pages/Dashboard/MyInquiries';
 import PortalOverview from './pages/Dashboard/PortalOverview';
 import MyTasks from './pages/Dashboard/MyTasks';
+import TaskDetails from './pages/Dashboard/TaskDetails';
 import AdminDashboard from './pages/Dashboard/AdminDashboard';
 import ResetPasswordForm from './components/Dashboard/ResetPasswordForm';
 import BlogDetailPage from './pages/Knowledge/BlogDetailPage';
@@ -27,6 +28,10 @@ import ManageAppointments from './pages/Dashboard/ManageAppointments';
 import MyDocuments from './pages/Dashboard/MyDocuments';
 import ManageDocuments from './pages/Dashboard/ManageDocuments';
 import ManageClients from './pages/Dashboard/ManageClients';
+import ManageVouchers from './pages/Dashboard/ManageVouchers';
+import CartPage from './pages/Services/CartPage';
+import ScrollToTop from './components/Common/ScrollToTop';
+import ResetPassword from './pages/Landing/ResetPassword';
 
 
 const App: React.FC = () => {
@@ -40,6 +45,23 @@ const App: React.FC = () => {
     window.location.href = '/';
   };
 
+  const AdminRoute = ({ children }: { children: React.ReactNode }) => {
+    const user = JSON.parse(localStorage.getItem('mnkhan_user') || '{}');
+    const isAdmin = ['admin', 'super-admin'].includes(user?.role);
+    
+    useEffect(() => {
+      if (isAuthenticated && !isAdmin) {
+        console.warn('Unauthorized access attempt to administrative route. Terminating session.');
+        logout();
+      }
+    }, [isAdmin]);
+
+    if (!isAuthenticated) return <Navigate to="/?unauthorized=true" replace />;
+    if (!isAdmin) return null; // Logic handled in useEffect
+
+    return <>{children}</>;
+  };
+
   const PortalOverviewWrapper = () => {
     const user = JSON.parse(localStorage.getItem('mnkhan_user') || '{}');
     const isAdmin = ['admin', 'super-admin'].includes(user?.role);
@@ -48,9 +70,10 @@ const App: React.FC = () => {
 
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <Routes>
         {/* Public Routes with Layout */}
-        <Route element={<PublicLayout isAuthenticated={isAuthenticated} onLogin={() => setIsAuthenticated(true)} />}>
+        <Route element={<PublicLayout isAuthenticated={isAuthenticated} onLogin={() => setIsAuthenticated(true)} onLogout={logout} />}>
           <Route path="/" element={<LandingPage />} />
           <Route path="/services" element={<ServicesPage />} />
           <Route path="/services/:id" element={<ServiceDetailPage />} />
@@ -61,6 +84,8 @@ const App: React.FC = () => {
           <Route path="/privacy" element={<PrivacyPolicy />} />
           <Route path="/appointment" element={<AppointmentPage />} />
           <Route path="/appointment/success" element={<PaymentSuccess />} />
+          <Route path="/cart" element={<CartPage />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
         </Route>
 
         {/* Portal Routes - Protected */}
@@ -77,19 +102,28 @@ const App: React.FC = () => {
           <Route index element={<Navigate to="/portal/overview" replace />} />
           <Route path="overview" element={<PortalOverviewWrapper />} />
           <Route path="my-tasks" element={<MyTasks />} />
+          <Route path="my-tasks/:id" element={<TaskDetails />} />
           <Route path="my-inquiries" element={<MyInquiries />} />
           <Route path="documents" element={<MyDocuments />} />
           
           {/* Admin Wrapper Route */}
-          <Route element={<AdminDashboard />}>
-            <Route path="manage-tasks" element={<ManageTasks />} />
-            <Route path="manage-people" element={<ManagePeople />} />
-            <Route path="manage-services" element={<ManageServices />} />
-            <Route path="manage-inquiries" element={<ManageInquiries />} />
-            <Route path="manage-appointments" element={<ManageAppointments />} />
-            <Route path="manage-documents" element={<ManageDocuments />} />
-            <Route path="manage-clients" element={<ManageClients />} />
-            <Route path="site-content" element={<ManageBlogs />} />
+          <Route 
+            element={
+              <AdminRoute>
+                <AdminDashboard />
+              </AdminRoute>
+            }
+          >
+            <Route path="admin-tasks" element={<ManageTasks />} />
+            <Route path="admin-tasks/:id" element={<TaskDetails />} />
+            <Route path="admin-people" element={<ManagePeople />} />
+            <Route path="admin-services" element={<ManageServices />} />
+            <Route path="admin-inquiries" element={<ManageInquiries />} />
+            <Route path="admin-appointments" element={<ManageAppointments />} />
+            <Route path="admin-documents" element={<ManageDocuments />} />
+            <Route path="admin-clients" element={<ManageClients />} />
+            <Route path="admin-vouchers" element={<ManageVouchers />} />
+            <Route path="admin-content" element={<ManageBlogs />} />
           </Route>
 
           <Route path="account-security" element={<ResetPasswordForm />} />

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { getUsers, updateUserStatus } from '../../api/admin';
+import { getUsers, updateUserStatus, resetClientPassword } from '../../api/admin';
 
 interface User {
   _id: string;
@@ -43,6 +43,25 @@ const ManageClients: React.FC = () => {
       alert(err.response?.data?.message || 'Failed to update user status');
     } finally {
       setUpdating(null);
+    }
+  };
+
+  const handleResetPassword = async (id: string) => {
+    const newPassword = prompt('Enter new password for this client:');
+    if (!newPassword || newPassword.length < 6) {
+      alert('Password must be at least 6 characters');
+      return;
+    }
+
+    if (!confirm('Are you sure you want to force reset this client\'s password?')) return;
+
+    try {
+      const res = await resetClientPassword(id, newPassword);
+      if (res.data.success) {
+        alert('Password reset successfully');
+      }
+    } catch (err: any) {
+      alert(err.response?.data?.message || 'Failed to reset password');
     }
   };
 
@@ -143,6 +162,12 @@ const ManageClients: React.FC = () => {
                           {updating === user._id ? '...' : 'Reactivate'}
                         </button>
                       )}
+                      <button
+                        onClick={() => handleResetPassword(user._id)}
+                        className="border border-mnkhan-charcoal text-mnkhan-charcoal px-4 py-2 text-[10px] font-bold uppercase tracking-widest hover:bg-mnkhan-charcoal hover:text-white transition-colors"
+                      >
+                        Reset PWD
+                      </button>
                     </div>
                   </td>
                 </tr>

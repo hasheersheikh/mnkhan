@@ -1,4 +1,20 @@
+import React from 'react';
 import { Link, useLocation } from 'react-router';
+import { 
+  LayoutDashboard, 
+  ClipboardList, 
+  MessageSquare, 
+  FileText, 
+  ShieldCheck, 
+  Users, 
+  Briefcase, 
+  Mail, 
+  Calendar, 
+  Globe,
+  PlusCircle,
+  ArrowLeft,
+  Tag
+} from 'lucide-react';
 
 const Sidebar: React.FC = () => {
   const user = JSON.parse(localStorage.getItem('mnkhan_user') || '{}');
@@ -6,24 +22,25 @@ const Sidebar: React.FC = () => {
   const location = useLocation();
 
   const clientItems = [
-    { label: 'Overview', path: '/portal/overview' },
-    { label: 'My Tasks', path: '/portal/my-tasks' },
-    { label: 'My Inquiries', path: '/portal/my-inquiries' },
-    { label: 'Documents', path: '/portal/documents' },
-    { label: 'Account Security', path: '/portal/account-security' },
+    { label: 'Overview', path: '/portal/overview', icon: LayoutDashboard },
+    { label: 'My Tasks', path: '/portal/my-tasks', icon: ClipboardList },
+    { label: 'My Inquiries', path: '/portal/my-inquiries', icon: MessageSquare },
+    { label: 'Documents', path: '/portal/documents', icon: FileText },
+    { label: 'Account Security', path: '/portal/account-security', icon: ShieldCheck },
   ];
 
   const adminItems = [
-    { label: 'Overview', path: '/portal/overview' },
-    { label: 'Manage Tasks', path: '/portal/manage-tasks' },
-    { label: 'Manage People', path: '/portal/manage-people' },
-    { label: 'Manage Services', path: '/portal/manage-services' },
-    { label: 'Manage Inquiries', path: '/portal/manage-inquiries' },
-    { label: 'Manage Clients', path: '/portal/manage-clients' },
-    { label: 'Manage Appointments', path: '/portal/manage-appointments' },
-    { label: 'Manage Documents', path: '/portal/manage-documents' },
-    { label: 'Site Content', path: '/portal/site-content' },
-    { label: 'Account Security', path: '/portal/account-security' },
+    { label: 'Overview', path: '/portal/overview', icon: LayoutDashboard },
+    { label: 'Manage Tasks', path: '/portal/admin-tasks', icon: ClipboardList },
+    { label: 'Manage People', path: '/portal/admin-people', icon: Users },
+    { label: 'Manage Services', path: '/portal/admin-services', icon: Briefcase },
+    { label: 'Manage Inquiries', path: '/portal/admin-inquiries', icon: Mail },
+    { label: 'Manage Clients', path: '/portal/admin-clients', icon: Users },
+    { label: 'Manage Vouchers', path: '/portal/admin-vouchers', icon: Tag },
+    { label: 'Manage Appointments', path: '/portal/admin-appointments', icon: Calendar },
+    { label: 'Manage Documents', path: '/portal/admin-documents', icon: FileText },
+    { label: 'Site Content', path: '/portal/admin-content', icon: Globe },
+    { label: 'Account Security', path: '/portal/account-security', icon: ShieldCheck },
   ];
 
   const navItems = isAdmin ? adminItems : clientItems;
@@ -41,36 +58,53 @@ const Sidebar: React.FC = () => {
         </Link>
       </div>
       
-      <nav className="flex-1 py-4">
-        {navItems.map((item) => {
-          const isActive = location.pathname === item.path;
-          return (
-            <Link
-              key={item.label}
-              to={item.path}
-              className={`flex items-center px-8 py-4 transition-all duration-200 cursor-pointer ${
-                isActive 
-                  ? 'text-white bg-white/5 border-l-4 border-mnkhan-orange' 
-                  : 'text-[#B0B0B0] hover:text-white hover:bg-white/5 border-l-4 border-transparent hover:border-mnkhan-orange'
-              }`}
+      <div className="flex-1 overflow-y-auto py-6">
+        {!isAdmin && (
+          <div className="px-6 mb-8">
+            <Link 
+              to="/services" 
+              className="flex items-center justify-center gap-3 w-full py-4 bg-mnkhan-orange text-white rounded font-bold text-xs uppercase tracking-widest hover:bg-white hover:text-mnkhan-charcoal transition-all duration-300 shadow-xl shadow-mnkhan-orange/10"
             >
-              {item.label}
+              <PlusCircle size={16} />
+              Buy New Services
             </Link>
-          );
-        })}
-      </nav>
+          </div>
+        )}
+
+        <nav className="space-y-1">
+          {navItems.map((item) => {
+            const isActive = location.pathname === item.path;
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.label}
+                to={item.path}
+                className={`flex items-center gap-4 px-8 py-4 transition-all duration-200 cursor-pointer ${
+                  isActive 
+                    ? 'text-white bg-white/5 border-l-4 border-mnkhan-orange' 
+                    : 'text-[#B0B0B0] hover:text-white hover:bg-white/5 border-l-4 border-transparent hover:border-mnkhan-orange'
+                }`}
+              >
+                <Icon size={18} className={isActive ? 'text-mnkhan-orange' : 'opacity-50'} />
+                <span className="text-sm font-medium tracking-tight">{item.label}</span>
+              </Link>
+            );
+          })}
+        </nav>
+      </div>
 
       <div className="px-8 py-6 border-t border-white/10">
         <Link 
           to="/" 
-          className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#B0B0B0] hover:text-mnkhan-orange transition-colors"
+          className="flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.2em] text-[#B0B0B0] hover:text-mnkhan-orange transition-colors"
         >
-          ← Back to Landing Page
+          <ArrowLeft size={14} />
+          Landing Page
         </Link>
       </div>
 
-      <div className="p-8 text-[0.8rem] text-mnkhan-text-muted">
-        &copy; 2026 MN KHAN 
+      <div className="px-8 py-6 text-[0.7rem] text-mnkhan-text-muted border-t border-white/5 bg-black/10">
+        &copy; 2026 MN KHAN & Associates
       </div>
     </aside>
   );

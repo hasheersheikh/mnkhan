@@ -11,8 +11,10 @@ const taskRoutes = require("./routes/tasks");
 const peopleRoutes = require("./routes/people");
 const blogRoutes = require("./routes/blogs");
 const appointmentRoutes = require("./routes/appointments");
+const cartRoutes = require("./routes/cart");
 const hourlyRateRoutes = require("./routes/hourlyRate");
 const documentRoutes = require("./routes/documents");
+const voucherRoutes = require("./routes/vouchers");
 
 const app = express();
 const PORT = process.env.PORT || 5001;
@@ -31,8 +33,10 @@ app.use("/api/tasks", taskRoutes);
 app.use("/api/people", peopleRoutes);
 app.use("/api/blogs", blogRoutes);
 app.use("/api/appointment", appointmentRoutes);
+app.use("/api/cart", cartRoutes);
 app.use("/api/hourly-rate", hourlyRateRoutes);
 app.use("/api/documents", documentRoutes);
+app.use("/api/vouchers", voucherRoutes);
 
 // Health Check
 app.get("/", (req, res) => res.send("MNKHAN Backend API is running..."));

@@ -33,6 +33,14 @@ const TaskSchema = new mongoose.Schema({
     ref: "AdminUser",
     required: true,
   },
+  comments: [
+    {
+      senderId: { type: mongoose.Schema.Types.ObjectId, required: true },
+      senderRole: { type: String, enum: ["client", "admin"], required: true },
+      text: { type: String, required: true },
+      date: { type: Date, default: Date.now },
+    },
+  ],
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });
