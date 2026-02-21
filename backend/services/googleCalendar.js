@@ -28,16 +28,20 @@ const getCalendarClient = () => {
       return null;
     }
 
-    // Robust key parsing to avoid ERR_OSSL_UNSUPPORTED
-    let privateKey = process.env.GOOGLE_PRIVATE_KEY;
+    // Aggressive key parsing to handle complex escaping on Render/Cloud
+    let privateKey = process.env.GOOGLE_PRIVATE_KEY || "";
     
-    // Remove wrapping quotes if present
-    if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
-      privateKey = privateKey.substring(1, privateKey.length - 1);
-    }
+    // 1. Clean up wrapping characters (quotes, backslashes, commas, whitespace)
+    privateKey = privateKey.trim();
+    privateKey = privateKey.replace(/^["'\\]+/, "").replace(/["'\\,]+$/, "");
     
-    // Replace escaped newlines with actual newlines
+    // 2. Handle escaped newlines
     privateKey = privateKey.replace(/\\n/g, "\n");
+    
+    // 3. Ensure PEM headers are intact
+    if (!privateKey.includes("-----BEGIN PRIVATE KEY-----")) {
+      console.warn("[Google Calendar] Warning: Private key PEM header missing.");
+    }
 
     const auth = new google.auth.GoogleAuth({
       credentials: {
