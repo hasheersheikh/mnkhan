@@ -4,14 +4,19 @@ const ics = require("ics");
 // Create reusable transporter
 const createTransporter = () => {
   return nodemailer.createTransport({
-    service: "gmail",
+    host: "smtp.gmail.com",
+  port: 587,
+  secure: false,
+  requireTLS: true,
     auth: {
       user: process.env.SMTP_USER,
       pass: process.env.SMTP_PASS, // Expected to be an App Password
     },
-    connectionTimeout: 20000, // 20 seconds
-    greetingTimeout: 20000,
-    socketTimeout: 30000,
+    connectionTimeout: 30000, // 30 seconds
+    greetingTimeout: 30000,
+    socketTimeout: 45000,
+    debug: true, // Enable debug logs
+    logger: true, // Log to console
   });
 };
 
