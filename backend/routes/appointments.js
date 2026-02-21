@@ -275,57 +275,12 @@ router.post("/verify-payment", async (req, res) => {
     appointment.status = "confirmed";
     appointment.confirmedAt = new Date();
 
-    // Create Google Calendar event with Meet link
-    try {
-      const calendarResult = await googleCalendarService.createCalendarEvent({
-        customerName: appointment.customerName,
-        customerEmail: appointment.customerEmail,
-        date: appointment.date,
-        startTime: appointment.startTime,
-        endTime: appointment.endTime,
-        duration: appointment.duration,
-        notes: appointment.notes,
-        timezone: appointment.timezone,
-      });
-
-      appointment.googleCalendarEventId = calendarResult.eventId;
-      appointment.googleMeetLink = calendarResult.meetLink;
-    } catch (err) {
-      console.warn(
-        "[Appointment] Could not create calendar event:",
-        err.message,
-      );
-    }
-
     await appointment.save();
 
-    // Send confirmation email with Invoice
-    try {
-      const invoiceData = {
-        customer: {
-          name: appointment.customerName,
-          email: appointment.customerEmail
-        },
-        items: [
-          {
-            description: `Legal Consultation (${appointment.duration} hr)`,
-            amount: appointment.totalAmount / 100
-          }
-        ],
-        total: appointment.totalAmount / 100,
-        invoiceNumber: `INV-APPT-${appointment._id.toString().slice(-6).toUpperCase()}`
-      };
-
-      const invoiceBuffer = await invoiceService.generateInvoicePDF(invoiceData);
-
-      await emailService.sendConfirmationEmail(appointment, invoiceBuffer);
-    } catch (emailError) {
-      console.error("[Appointment] Appointment confirmed but email/invoice failed:", emailError.message);
-    }
-
+    // Respond immediately to the user
     res.json({
       success: true,
-      message: "Payment verified and appointment confirmed",
+      message: "Payment verified. Your appointment is being finalized.",
       appointment: {
         id: appointment._id,
         date: appointment.date,
@@ -333,15 +288,73 @@ router.post("/verify-payment", async (req, res) => {
         endTime: appointment.endTime,
         duration: appointment.duration,
         status: appointment.status,
-        googleMeetLink: appointment.googleMeetLink,
       },
     });
+
+    // Handle background tasks (Calendar, Email, Invoice)
+    (async () => {
+      try {
+        console.log(`[Appointment] Starting background tasks for appointment: ${appointment._id}`);
+        
+        // 1. Create Google Calendar event with Meet link
+        try {
+          const calendarResult = await googleCalendarService.createCalendarEvent({
+            customerName: appointment.customerName,
+            customerEmail: appointment.customerEmail,
+            date: appointment.date,
+            startTime: appointment.startTime,
+            endTime: appointment.endTime,
+            duration: appointment.duration,
+            notes: appointment.notes,
+            timezone: appointment.timezone,
+          });
+
+          appointment.googleCalendarEventId = calendarResult.eventId;
+          appointment.googleMeetLink = calendarResult.meetLink;
+          await appointment.save();
+          console.log(`[Appointment] Calendar event created for ${appointment._id}`);
+        } catch (err) {
+          console.warn("[Appointment] Background: Could not create calendar event:", err.message);
+        }
+
+        // 2. Send confirmation email with Invoice
+        try {
+          const invoiceData = {
+            customer: {
+              name: appointment.customerName,
+              email: appointment.customerEmail
+            },
+            items: [
+              {
+                description: `Legal Consultation (${appointment.duration} hr)`,
+                amount: appointment.totalAmount / 100
+              }
+            ],
+            total: appointment.totalAmount / 100,
+            invoiceNumber: `INV-APPT-${appointment._id.toString().slice(-6).toUpperCase()}`
+          };
+
+          const invoiceBuffer = await invoiceService.generateInvoicePDF(invoiceData);
+          await emailService.sendConfirmationEmail(appointment, invoiceBuffer);
+          console.log(`[Appointment] Confirmation email sent for ${appointment._id}`);
+        } catch (emailError) {
+          console.error("[Appointment] Background: Email/invoice failed:", emailError.message);
+        }
+        
+        console.log(`[Appointment] Background tasks completed for ${appointment._id}`);
+      } catch (bgError) {
+        console.error("[Appointment] Critical error in background tasks:", bgError);
+      }
+    })();
+
   } catch (error) {
     console.error("[Appointment] Error verifying payment:", error);
-    res.status(500).json({
-      success: false,
-      message: error.message || "Failed to verify payment",
-    });
+    if (!res.headersSent) {
+      res.status(500).json({
+        success: false,
+        message: error.message || "Failed to verify payment",
+      });
+    }
   }
 });
 

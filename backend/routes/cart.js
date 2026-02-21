@@ -215,56 +215,72 @@ router.post("/verify-payment", authenticateToken, async (req, res) => {
     cart.items = [];
     await cart.save();
 
-    // Send confirmation email with Invoice
-    if (orderDetails) {
-      try {
-        const invoiceData = {
-          customer: {
-            name: req.user.name,
-            email: req.user.email
-          },
-          items: purchasedServices.map(s => ({
-            description: s.name,
-            amount: (parseFloat((s.price || "0").toString().replace(/[^0-9.]/g, "")) || 0)
-          })),
-          total: orderDetails.amount / 100,
-          invoiceNumber: `INV-SVC-${razorpay_order_id.slice(-6).toUpperCase()}`
-        };
-
-        const invoiceBuffer = await invoiceService.generateInvoicePDF(invoiceData);
-
-        await emailService.sendServiceConfirmationEmail(
-          req.user,
-          purchasedServices,
-          orderDetails.amount,
-          orderDetails.id,
-          invoiceBuffer
-        );
-      } catch (emailError) {
-        console.error("[Cart] Service confirmed but email/invoice failed:", emailError.message);
-      }
-    }
-
-    // Increment voucher usage if applicable
-    if (orderDetails && orderDetails.notes && orderDetails.notes.voucherCode && orderDetails.notes.voucherCode !== "NONE") {
-      try {
-        await Voucher.findOneAndUpdate(
-          { code: orderDetails.notes.voucherCode },
-          { $inc: { usageCount: 1 } }
-        );
-      } catch (vErr) {
-        console.warn("[Cart] Failed to increment voucher usage:", vErr.message);
-      }
-    }
-
     res.json({
       success: true,
-      message: "Payment verified and services added to your tasks.",
+      message: "Payment verified. Your services are being processed.",
       tasksCount: tasks.length
     });
+
+    // Handle background tasks (Email, Invoice, Voucher)
+    (async () => {
+      try {
+        console.log(`[Cart] Starting background tasks for order: ${razorpay_order_id}`);
+        
+        // 1. Send confirmation email with Invoice
+        if (orderDetails) {
+          try {
+            const invoiceData = {
+              customer: {
+                name: req.user.name,
+                email: req.user.email
+              },
+              items: purchasedServices.map(s => ({
+                description: s.name,
+                amount: (parseFloat((s.price || "0").toString().replace(/[^0-9.]/g, "")) || 0)
+              })),
+              total: orderDetails.amount / 100,
+              invoiceNumber: `INV-SVC-${razorpay_order_id.slice(-6).toUpperCase()}`
+            };
+
+            const invoiceBuffer = await invoiceService.generateInvoicePDF(invoiceData);
+
+            await emailService.sendServiceConfirmationEmail(
+              req.user,
+              purchasedServices,
+              orderDetails.amount,
+              orderDetails.id,
+              invoiceBuffer
+            );
+            console.log(`[Cart] Confirmation email sent for order ${razorpay_order_id}`);
+          } catch (emailError) {
+            console.error("[Cart] Background: Email/invoice failed:", emailError.message);
+          }
+        }
+
+        // 2. Increment voucher usage if applicable
+        if (orderDetails && orderDetails.notes && orderDetails.notes.voucherCode && orderDetails.notes.voucherCode !== "NONE") {
+          try {
+            await Voucher.findOneAndUpdate(
+              { code: orderDetails.notes.voucherCode },
+              { $inc: { usageCount: 1 } }
+            );
+            console.log(`[Cart] Voucher usage incremented for ${orderDetails.notes.voucherCode}`);
+          } catch (vErr) {
+            console.warn("[Cart] Background: Failed to increment voucher usage:", vErr.message);
+          }
+        }
+        
+        console.log(`[Cart] Background tasks completed for order ${razorpay_order_id}`);
+      } catch (bgError) {
+        console.error("[Cart] Critical error in background tasks:", bgError);
+      }
+    })();
+
   } catch (err) {
     console.error("[Cart] Error during payment verification:", err);
-    res.status(500).json({ success: false, message: err.message });
+    if (!res.headersSent) {
+      res.status(500).json({ success: false, message: err.message });
+    }
   }
 });
 

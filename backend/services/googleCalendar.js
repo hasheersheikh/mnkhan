@@ -28,14 +28,21 @@ const getCalendarClient = () => {
       return null;
     }
 
+    // Robust key parsing to avoid ERR_OSSL_UNSUPPORTED
+    let privateKey = process.env.GOOGLE_PRIVATE_KEY;
+    
+    // Remove wrapping quotes if present
+    if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
+      privateKey = privateKey.substring(1, privateKey.length - 1);
+    }
+    
+    // Replace escaped newlines with actual newlines
+    privateKey = privateKey.replace(/\\n/g, "\n");
+
     const auth = new google.auth.GoogleAuth({
       credentials: {
         client_email: process.env.GOOGLE_CLIENT_EMAIL,
-        private_key: (process.env.GOOGLE_PRIVATE_KEY || "")
-          .replace(/^\\"/, "")
-          .replace(/\\"$/, "")
-          .replace(/\\",$/, "")
-          .replace(/\\n/g, "\n"),
+        private_key: privateKey,
       },
       scopes: ["https://www.googleapis.com/auth/calendar"],
     });
