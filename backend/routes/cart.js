@@ -7,6 +7,7 @@ const AdminUser = require("../models/AdminUser");
 const Voucher = require("../models/Voucher");
 const razorpayService = require("../services/razorpay");
 const emailService = require("../services/emailService");
+const invoiceService = require("../services/invoiceService");
 const { authenticateToken } = require("../middleware/auth");
 
 // GET current user's cart
@@ -199,6 +200,13 @@ router.post("/verify-payment", authenticateToken, async (req, res) => {
         }));
       }
 
+      if (service.requiredDocuments && service.requiredDocuments.length > 0) {
+        task.requiredDocuments = service.requiredDocuments.map(docName => ({
+          name: docName,
+          status: "pending"
+        }));
+      }
+
       await task.save();
       tasks.push(task);
     }
@@ -207,14 +215,34 @@ router.post("/verify-payment", authenticateToken, async (req, res) => {
     cart.items = [];
     await cart.save();
 
-    // Send confirmation email
+    // Send confirmation email with Invoice
     if (orderDetails) {
-      emailService.sendServiceConfirmationEmail(
-        req.user,
-        purchasedServices,
-        orderDetails.amount,
-        orderDetails.id
-      ).catch(e => console.error("[Cart] Email fail:", e));
+      try {
+        const invoiceData = {
+          customer: {
+            name: req.user.name,
+            email: req.user.email
+          },
+          items: purchasedServices.map(s => ({
+            description: s.name,
+            amount: (parseFloat((s.price || "0").toString().replace(/[^0-9.]/g, "")) || 0)
+          })),
+          total: orderDetails.amount / 100,
+          invoiceNumber: `INV-SVC-${razorpay_order_id.slice(-6).toUpperCase()}`
+        };
+
+        const invoiceBuffer = await invoiceService.generateInvoicePDF(invoiceData);
+
+        await emailService.sendServiceConfirmationEmail(
+          req.user,
+          purchasedServices,
+          orderDetails.amount,
+          orderDetails.id,
+          invoiceBuffer
+        );
+      } catch (emailError) {
+        console.error("[Cart] Service confirmed but email/invoice failed:", emailError.message);
+      }
     }
 
     // Increment voucher usage if applicable

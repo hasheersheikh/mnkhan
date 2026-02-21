@@ -307,4 +307,23 @@ router.post(
   }
 );
 
+router.delete(
+  "/staff/:id",
+  authenticateToken,
+  authorizeRole(["admin", "super-admin"]),
+  async (req, res) => {
+    try {
+      const staff = await AdminUser.findById(req.params.id);
+      if (!staff || staff.role !== "staff") {
+        return res.status(404).json({ success: false, message: "Staff member not found" });
+      }
+
+      await AdminUser.findByIdAndDelete(req.params.id);
+      res.json({ success: true, message: "Staff member removed from firm directory" });
+    } catch (err) {
+      res.status(500).json({ success: false, message: err.message });
+    }
+  }
+);
+
 module.exports = router;

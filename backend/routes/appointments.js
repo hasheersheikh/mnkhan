@@ -5,6 +5,7 @@ const HourlyRate = require("../models/HourlyRate");
 const razorpayService = require("../services/razorpay");
 const googleCalendarService = require("../services/googleCalendar");
 const emailService = require("../services/emailService");
+const invoiceService = require("../services/invoiceService");
 const { authenticateToken, authorizeRole } = require("../middleware/auth");
 
 /**
@@ -129,25 +130,28 @@ router.post("/", async (req, res) => {
 
       await appointment.save();
 
-      // Send confirmation email
+      // Send confirmation email with Invoice
       try {
-        await emailService.sendConfirmationEmail({
-          customerName: appointment.customerName,
-          customerEmail: appointment.customerEmail,
-          date: appointment.date,
-          startTime: appointment.startTime,
-          endTime: appointment.endTime,
-          duration: appointment.duration,
-          totalAmount: appointment.totalAmount,
-          currency: appointment.currency,
-          googleMeetLink: appointment.googleMeetLink,
-          notes: appointment.notes,
-        });
-      } catch (err) {
-        console.warn(
-          "[Appointment] Could not send confirmation email in bypass mode:",
-          err.message,
-        );
+        const invoiceData = {
+          customer: {
+            name: appointment.customerName,
+            email: appointment.customerEmail
+          },
+          items: [
+            {
+              description: `Legal Consultation (${appointment.duration} hr)`,
+              amount: appointment.totalAmount / 100
+            }
+          ],
+          total: appointment.totalAmount / 100,
+          invoiceNumber: `INV-APPT-${appointment._id.toString().slice(-6).toUpperCase()}`
+        };
+
+        const invoiceBuffer = await invoiceService.generateInvoicePDF(invoiceData);
+
+        await emailService.sendConfirmationEmail(appointment, invoiceBuffer);
+      } catch (emailError) {
+        console.error("[Appointment] Appointment confirmed but email/invoice failed:", emailError.message);
       }
 
       return res.status(201).json({
@@ -295,25 +299,28 @@ router.post("/verify-payment", async (req, res) => {
 
     await appointment.save();
 
-    // Send confirmation email
+    // Send confirmation email with Invoice
     try {
-      await emailService.sendConfirmationEmail({
-        customerName: appointment.customerName,
-        customerEmail: appointment.customerEmail,
-        date: appointment.date,
-        startTime: appointment.startTime,
-        endTime: appointment.endTime,
-        duration: appointment.duration,
-        totalAmount: appointment.totalAmount,
-        currency: appointment.currency,
-        googleMeetLink: appointment.googleMeetLink,
-        notes: appointment.notes,
-      });
-    } catch (err) {
-      console.warn(
-        "[Appointment] Could not send confirmation email:",
-        err.message,
-      );
+      const invoiceData = {
+        customer: {
+          name: appointment.customerName,
+          email: appointment.customerEmail
+        },
+        items: [
+          {
+            description: `Legal Consultation (${appointment.duration} hr)`,
+            amount: appointment.totalAmount / 100
+          }
+        ],
+        total: appointment.totalAmount / 100,
+        invoiceNumber: `INV-APPT-${appointment._id.toString().slice(-6).toUpperCase()}`
+      };
+
+      const invoiceBuffer = await invoiceService.generateInvoicePDF(invoiceData);
+
+      await emailService.sendConfirmationEmail(appointment, invoiceBuffer);
+    } catch (emailError) {
+      console.error("[Appointment] Appointment confirmed but email/invoice failed:", emailError.message);
     }
 
     res.json({

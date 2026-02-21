@@ -19,6 +19,7 @@ const voucherRoutes = require("./routes/vouchers");
 const app = express();
 console.log("[Startup] BYPASS_PAYMENT status:", process.env.BYPASS_PAYMENT);
 console.log("[Startup] NODE_ENV status:", process.env.NODE_ENV);
+console.log("[Startup] ADMIN_NOTIFICATION_EMAIL:", process.env.ADMIN_NOTIFICATION_EMAIL);
 const PORT = process.env.PORT || 5001;
 const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/mnkhan";
 

@@ -9,6 +9,7 @@ const ServiceSchema = new mongoose.Schema({
   servicer: { type: String },
   acceptanceCreteria: { type: String },
   defaultSteps: [{ type: String }],
+  requiredDocuments: [{ type: String }],
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now },
 });

@@ -7,3 +7,4 @@ export const resetClientPassword = (id: string, password: string) => client.post
 export const getStaff = () => client.get('/admin/staff');
 export const createStaff = (data: any) => client.post('/admin/staff', data);
 export const resetStaffPassword = (id: string, password: string) => client.post(`/admin/staff/${id}/reset-password`, { password });
+export const deleteStaff = (id: string) => client.delete(`/admin/staff/${id}`);

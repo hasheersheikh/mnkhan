@@ -2,6 +2,7 @@ const express = require("express");
 const multer = require("multer");
 const router = express.Router();
 const Document = require("../models/Document");
+const Task = require("../models/Task");
 const {
   validateFile,
   uploadFile,
@@ -134,6 +135,42 @@ router.post(
 
       await document.save();
 
+      // If this document is linked to a task, check if it satisfies any required documents
+      if (taskId) {
+        try {
+          const Task = require("../models/Task");
+          const task = await Task.findById(taskId);
+          if (task && task.requiredDocuments && task.requiredDocuments.length > 0) {
+            const categoryClean = (category || "").toLowerCase().replace(/_/g, " ");
+            const originalNameLower = (file.originalname || "").toLowerCase();
+
+            let updated = false;
+            task.requiredDocuments.forEach((reqDoc) => {
+              if (reqDoc.status === "pending") {
+                const reqNameClean = reqDoc.name.toLowerCase();
+                // Match if the requirement name is in the filename, or category matches
+                if (
+                  originalNameLower.includes(reqNameClean) ||
+                  categoryClean.includes(reqNameClean) ||
+                  reqNameClean.includes(categoryClean)
+                ) {
+                  reqDoc.status = "uploaded";
+                  reqDoc.documentId = document._id;
+                  updated = true;
+                }
+              }
+            });
+
+            if (updated) {
+              await task.save();
+              console.log(`[API] Task ${taskId} required documents updated.`);
+            }
+          }
+        } catch (err) {
+          console.warn("[API] Failed to update task required documents status:", err.message);
+        }
+      }
+
       res.status(201).json({
         message: "Document uploaded successfully",
         document: {
@@ -171,10 +208,31 @@ router.get("/", authenticateToken, async (req, res) => {
     const { appointmentId, serviceId, taskId, category, status } = req.query;
 
     // Build query
-    const query = { userId };
+    let query = { userId };
+    
+    // If querying by taskId, check for shared access authorization
+    if (taskId) {
+      const task = await Task.findById(taskId);
+      if (!task) {
+        return res.status(404).json({ message: "Task not found" });
+      }
+
+      // Check if user is authorized to view this task's documents
+      // (Is the client of the task OR admin/staff assigned to the task)
+      const isClient = task.userId.toString() === req.user._id.toString();
+      const isAdmin = req.user.role === "admin" || req.user.role === "super-admin";
+      const isAssignedStaff = task.assignedStaffId && task.assignedStaffId.toString() === req.user._id.toString();
+
+      if (!isClient && !isAdmin && !isAssignedStaff) {
+        return res.status(403).json({ message: "Access denied to this matter's documents" });
+      }
+
+      // If authorized, we query all documents for this taskId regardless of uploader
+      query = { taskId };
+    }
+
     if (appointmentId) query.appointmentId = appointmentId;
     if (serviceId) query.serviceId = serviceId;
-    if (taskId) query.taskId = taskId;
     if (category) query.category = category;
     if (status) query.status = status;
 

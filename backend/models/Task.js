@@ -21,6 +21,7 @@ const TaskSchema = new mongoose.Schema({
       event: { type: String, required: true },
       date: { type: Date, default: Date.now },
       note: { type: String },
+      performedBy: { type: String },
     },
   ],
   userId: {
@@ -47,6 +48,13 @@ const TaskSchema = new mongoose.Schema({
       senderRole: { type: String, enum: ["client", "admin", "staff"], required: true },
       text: { type: String, required: true },
       date: { type: Date, default: Date.now },
+    },
+  ],
+  requiredDocuments: [
+    {
+      name: { type: String, required: true },
+      status: { type: String, enum: ["pending", "uploaded"], default: "pending" },
+      documentId: { type: mongoose.Schema.Types.ObjectId, ref: "Document" },
     },
   ],
   createdAt: { type: Date, default: Date.now },

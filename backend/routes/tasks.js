@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const Task = require("../models/Task");
 const Service = require("../models/Service");
+const emailService = require("../services/emailService");
 const { authenticateToken, authorizeRole } = require("../middleware/auth");
 
 // GET all tasks (Admin see all, Client see their own)
@@ -174,10 +175,28 @@ router.patch(
         task.timeline.push({
           event: newEvent,
           note: eventNote || "",
+          performedBy: req.user.name,
         });
       }
 
       await task.save();
+
+      // Send email notification to client
+      if (newEvent) {
+        try {
+          const populatedTask = await Task.findById(task._id).populate("userId", "name email");
+          if (populatedTask && populatedTask.userId) {
+            await emailService.sendTaskUpdateEmail(
+              populatedTask.userId,
+              populatedTask,
+              newEvent,
+              eventNote
+            );
+          }
+        } catch (emailErr) {
+          console.warn("[API] Task update saved but email failed:", emailErr.message);
+        }
+      }
       
       const updatedTask = await Task.findById(task._id)
         .populate("userId", "name email")
@@ -233,8 +252,12 @@ router.post("/:id/comments", authenticateToken, async (req, res) => {
       return res.status(404).json({ success: false, message: "Task not found" });
     }
 
-    // Authorization: only the assigned client or an admin can comment
-    if (req.user.role === "client" && task.userId.toString() !== req.user._id.toString()) {
+    // Authorization: only the assigned client, assigned staff, or an admin can comment
+    const isClient = req.user.role === "client" && task.userId.toString() === req.user._id.toString();
+    const isAssignedStaff = req.user.role === "staff" && task.assignedStaffId && task.assignedStaffId.toString() === req.user._id.toString();
+    const isAdmin = req.user.role === "admin" || req.user.role === "super-admin";
+
+    if (!isClient && !isAssignedStaff && !isAdmin) {
       return res.status(403).json({ success: false, message: "Forbidden" });
     }
 
@@ -251,7 +274,8 @@ router.post("/:id/comments", authenticateToken, async (req, res) => {
     // Return populated task for frontend UI update
     const updatedTask = await Task.findById(req.params.id)
       .populate("userId", "name email")
-      .populate("adminId", "name");
+      .populate("adminId", "name")
+      .populate("assignedStaffId", "name");
 
     res.json({ success: true, task: updatedTask });
   } catch (err) {
