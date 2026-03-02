@@ -57,15 +57,12 @@ const generateInvoicePDF = async (data) => {
       doc.font('Helvetica').fontSize(10).fillColor('#333132');
       doc.text(data.customer.name, 50, infoY + 15);
       if (data.customer.company) doc.text(data.customer.company, 50, infoY + 30);
-      doc.text(data.customer.address || 'Street Address, City', 50, infoY + 45);
 
       // Pay To (Left, below Issued To)
       const payToY = infoY + 80;
       doc.font('Helvetica-Bold').fontSize(10).text('PAY TO:', 50, payToY);
       doc.font('Helvetica').fontSize(10);
-      doc.text('Borcele Bank', 50, payToY + 15);
-      doc.text('Account Name: Adeline Palmerston', 50, payToY + 30);
-      doc.text('Account No.: 0123 4567 8901', 50, payToY + 45);
+      doc.text('MN Khan & Associates', 50, payToY + 15);
 
       // Invoice Metadata (Right)
       const metaX = 350;
@@ -76,11 +73,6 @@ const generateInvoicePDF = async (data) => {
 
       doc.font('Helvetica-Bold').text('DATE:', metaX, infoY + rowHeight, { align: 'right', width: 120 });
       doc.font('Helvetica').text(new Date().toLocaleDateString('en-GB').replace(/\//g, '.'), metaX + 130, infoY + rowHeight, { align: 'left' });
-
-      doc.font('Helvetica-Bold').text('DUE DATE:', metaX, infoY + rowHeight * 2, { align: 'right', width: 120 });
-      const dueDate = new Date();
-      dueDate.setDate(dueDate.getDate() + 30);
-      doc.font('Helvetica').text(dueDate.toLocaleDateString('en-GB').replace(/\//g, '.'), metaX + 130, infoY + rowHeight * 2, { align: 'left' });
 
       // --- TABLE ---
       const tableTop = 380;
@@ -105,10 +97,10 @@ const generateInvoicePDF = async (data) => {
       
       data.items.forEach(item => {
         doc.text(item.description, 50, currentY, { width: 230 });
-        doc.text(`$${item.amount.toLocaleString()}`, 300, currentY, { width: 80, align: 'right' });
+        doc.text(`₹${item.amount.toLocaleString()}`, 300, currentY, { width: 80, align: 'right' });
         doc.text(item.qty || '1', 400, currentY, { width: 50, align: 'right' });
         const lineTotal = item.amount * (item.qty || 1);
-        doc.text(`$${lineTotal.toLocaleString()}`, 480, currentY, { width: 70, align: 'right' });
+        doc.text(`₹${lineTotal.toLocaleString()}`, 480, currentY, { width: 70, align: 'right' });
         currentY += 25;
       });
 
@@ -125,15 +117,11 @@ const generateInvoicePDF = async (data) => {
       const subtotal = data.total || data.items.reduce((sum, item) => sum + (item.amount * (item.qty || 1)), 0);
       
       doc.font('Helvetica-Bold').text('SUBTOTAL', 50, currentY + 10);
-      doc.text(`$${subtotal.toLocaleString()}`, summaryValX, currentY + 10, { width: 70, align: 'right' });
-
-      doc.font('Helvetica').text('Tax', summaryX, currentY + 25, { width: 50, align: 'right' });
-      doc.text('10%', summaryValX, currentY + 25, { width: 70, align: 'right' });
+      doc.text(`₹${subtotal.toLocaleString()}`, summaryValX, currentY + 10, { width: 70, align: 'right' });
 
       doc.font('Helvetica-Bold').fontSize(11).text('TOTAL', summaryX, currentY + 40, { width: 50, align: 'right' });
-      const tax = subtotal * 0.1;
-      const finalTotal = subtotal + tax;
-      doc.text(`$${finalTotal.toLocaleString()}`, summaryValX, currentY + 40, { width: 70, align: 'right' });
+      const finalTotal = subtotal;
+      doc.text(`₹${finalTotal.toLocaleString()}`, summaryValX, currentY + 40, { width: 70, align: 'right' });
 
       doc.end();
     } catch (err) {
