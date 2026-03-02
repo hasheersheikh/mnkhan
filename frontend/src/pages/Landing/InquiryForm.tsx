@@ -55,6 +55,11 @@ const InquiryForm: React.FC<InquiryFormProps> = ({
     setErrorMsg("");
 
     try {
+      if (formData.phone.length !== 10) {
+        setStatus("error");
+        setErrorMsg("Phone number must be exactly 10 digits");
+        return;
+      }
       const submissionData = {
         ...formData,
         phone: `+91 ${formData.phone}`,

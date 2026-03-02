@@ -43,6 +43,11 @@ const Login: React.FC<LoginProps> = ({ onClose, onSuccess }) => {
           setError(data.message);
         }
       } else {
+        if (isSignup && formData.phone.length !== 10) {
+          setError("Phone number must be exactly 10 digits");
+          setLoading(false);
+          return;
+        }
         const response = isSignup
           ? await signup({ ...formData, phone: `+91 ${formData.phone}` })
           : await login({

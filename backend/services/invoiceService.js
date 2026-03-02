@@ -60,9 +60,12 @@ const generateInvoicePDF = async (data) => {
 
       // Pay To (Left, below Issued To)
       const payToY = infoY + 80;
-      doc.font('Helvetica-Bold').fontSize(10).text('PAY TO:', 50, payToY);
+      doc.font('Helvetica-Bold').fontSize(10).text('PAID TO:', 50, payToY);
       doc.font('Helvetica').fontSize(10);
       doc.text('MN Khan & Associates', 50, payToY + 15);
+      doc.text('Najma House, Plot No C/5', 50, payToY + 15);
+      doc.text('Rathod Layout, Anant Nagar', 50, payToY + 15);
+      doc.text('Nagpur - 440013', 50, payToY + 15);
 
       // Invoice Metadata (Right)
       const metaX = 350;
@@ -97,10 +100,10 @@ const generateInvoicePDF = async (data) => {
       
       data.items.forEach(item => {
         doc.text(item.description, 50, currentY, { width: 230 });
-        doc.text(`₹${item.amount.toLocaleString()}`, 300, currentY, { width: 80, align: 'right' });
+        doc.text(`${item.amount.toLocaleString()}`, 300, currentY, { width: 80, align: 'right' });
         doc.text(item.qty || '1', 400, currentY, { width: 50, align: 'right' });
         const lineTotal = item.amount * (item.qty || 1);
-        doc.text(`₹${lineTotal.toLocaleString()}`, 480, currentY, { width: 70, align: 'right' });
+        doc.text(`${lineTotal.toLocaleString()}`, 480, currentY, { width: 70, align: 'right' });
         currentY += 25;
       });
 
@@ -117,11 +120,11 @@ const generateInvoicePDF = async (data) => {
       const subtotal = data.total || data.items.reduce((sum, item) => sum + (item.amount * (item.qty || 1)), 0);
       
       doc.font('Helvetica-Bold').text('SUBTOTAL', 50, currentY + 10);
-      doc.text(`₹${subtotal.toLocaleString()}`, summaryValX, currentY + 10, { width: 70, align: 'right' });
+      doc.text(`${subtotal.toLocaleString()}`, summaryValX, currentY + 10, { width: 70, align: 'right' });
 
       doc.font('Helvetica-Bold').fontSize(11).text('TOTAL', summaryX, currentY + 40, { width: 50, align: 'right' });
       const finalTotal = subtotal;
-      doc.text(`₹${finalTotal.toLocaleString()}`, summaryValX, currentY + 40, { width: 70, align: 'right' });
+      doc.text(`${finalTotal.toLocaleString()}`, summaryValX, currentY + 40, { width: 70, align: 'right' });
 
       doc.end();
     } catch (err) {
