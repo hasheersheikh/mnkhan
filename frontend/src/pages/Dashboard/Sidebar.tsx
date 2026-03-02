@@ -170,7 +170,18 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, setIsOpen }) => {
         </div>
 
         <div className="px-6 md:px-8 py-4 md:py-6 text-[0.7rem] text-mnkhan-text-muted border-t border-white/5 bg-black/10">
-          &copy; 2026 MN KHAN & Associates
+          <p>&copy; 2026 MN KHAN & Associates</p>
+          <p className="mt-1 opacity-60">
+            Developed by{" "}
+            <a
+              href="https://pacifista.site"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-mnkhan-orange transition-colors"
+            >
+              Pacifista Technologies
+            </a>
+          </p>
         </div>
       </aside>
     </>

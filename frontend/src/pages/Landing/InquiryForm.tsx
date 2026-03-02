@@ -190,7 +190,7 @@ const InquiryForm: React.FC<InquiryFormProps> = ({
                   })
                 }
                 className={`w-full bg-transparent py-3 outline-none ${theme === "dark" ? "text-white placeholder:text-white/20" : "text-mnkhan-charcoal placeholder:text-gray-400"}`}
-                placeholder="98765-43210"
+                placeholder="9876543210"
               />
             </div>
           </div>

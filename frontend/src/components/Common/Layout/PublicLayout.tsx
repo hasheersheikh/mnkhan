@@ -91,8 +91,19 @@ const PublicLayout: React.FC<PublicLayoutProps> = ({
           </div>
         </div>
         <div className="max-w-7xl mx-auto mt-12 pt-6 border-t border-gray-700 text-center">
-          <p className="text-[10px] md:text-xs text-gray-500">
+          <p className="text-[10px] md:text-xs text-gray-500 mb-1">
             © 2026 MN Khan & Associates. All rights reserved.
+          </p>
+          <p className="text-[10px] md:text-xs text-gray-600">
+            Developed by{" "}
+            <a
+              href="https://pacifista.site"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-mnkhan-orange transition-colors"
+            >
+              Pacifista Technologies
+            </a>
           </p>
         </div>
       </footer>

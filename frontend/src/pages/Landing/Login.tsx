@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router';
-import { login, signup } from '../../api/auth';
+import React, { useState } from "react";
+import { useNavigate } from "react-router";
+import { login, signup } from "../../api/auth";
 
 interface LoginProps {
   onClose: () => void;
@@ -12,29 +12,29 @@ const Login: React.FC<LoginProps> = ({ onClose, onSuccess }) => {
   const [isSignup, setIsSignup] = useState(false);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState("");
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    password: ''
+    name: "",
+    email: "",
+    phone: "",
+    password: "",
   });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError('');
-    setMessage('');
+    setError("");
+    setMessage("");
 
     try {
       if (isForgotPassword) {
         // Mocking the reset password call
-        const response: any = await fetch('/api/auth/reset-password', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: formData.email })
+        const response: any = await fetch("/api/auth/reset-password", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: formData.email }),
         });
         const data = await response.json();
         if (data.success) {
@@ -43,28 +43,32 @@ const Login: React.FC<LoginProps> = ({ onClose, onSuccess }) => {
           setError(data.message);
         }
       } else {
-        const response = isSignup 
-          ? await signup(formData)
-          : await login({ email: formData.email, password: formData.password, isAdmin } as any);
+        const response = isSignup
+          ? await signup({ ...formData, phone: `+91 ${formData.phone}` })
+          : await login({
+              email: formData.email,
+              password: formData.password,
+              isAdmin,
+            } as any);
 
         const data = response.data;
         if (data.success) {
           if (isSignup) {
             setMessage(data.message);
-            setFormData({ name: '', email: '', phone: '', password: '' });
+            setFormData({ name: "", email: "", phone: "", password: "" });
             // Don't auto-login for signup anymore, wait for admin approval
           } else {
-            localStorage.setItem('mnkhan_token', data.token);
-            localStorage.setItem('mnkhan_user', JSON.stringify(data.user));
-            navigate('/portal/overview');
+            localStorage.setItem("mnkhan_token", data.token);
+            localStorage.setItem("mnkhan_user", JSON.stringify(data.user));
+            navigate("/portal/overview");
             onSuccess();
           }
         } else {
-          setError(data.message || 'Authentication failed');
+          setError(data.message || "Authentication failed");
         }
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Server connection failed');
+      setError(err.response?.data?.message || "Server connection failed");
     } finally {
       setLoading(false);
     }
@@ -72,13 +76,15 @@ const Login: React.FC<LoginProps> = ({ onClose, onSuccess }) => {
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-      <div 
+      <div
         className="absolute inset-0 bg-mnkhan-charcoal/80 backdrop-blur-sm"
         onClick={onClose}
       />
-      
-      <div className={`relative bg-white w-full max-w-md p-10 rounded-sm shadow-2xl animate-in fade-in zoom-in duration-300 border-t-4 ${isAdmin ? 'border-mnkhan-orange' : 'border-transparent'}`}>
-        <button 
+
+      <div
+        className={`relative bg-white w-full max-w-md p-10 rounded-sm shadow-2xl animate-in fade-in zoom-in duration-300 border-t-4 ${isAdmin ? "border-mnkhan-orange" : "border-transparent"}`}
+      >
+        <button
           onClick={onClose}
           className="absolute top-6 right-6 text-mnkhan-text-muted hover:text-mnkhan-charcoal transition-colors"
         >
@@ -87,18 +93,34 @@ const Login: React.FC<LoginProps> = ({ onClose, onSuccess }) => {
 
         <div className="text-center mb-10">
           <div className="inline-block mb-4">
-            <button 
-              onClick={() => { setIsAdmin(!isAdmin); setIsSignup(false); setIsForgotPassword(false); }}
-              className={`text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full border transition-all ${isAdmin ? 'bg-mnkhan-orange text-white border-mnkhan-orange' : 'text-mnkhan-text-muted border-mnkhan-gray-border hover:border-mnkhan-orange'}`}
+            <button
+              onClick={() => {
+                setIsAdmin(!isAdmin);
+                setIsSignup(false);
+                setIsForgotPassword(false);
+              }}
+              className={`text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full border transition-all ${isAdmin ? "bg-mnkhan-orange text-white border-mnkhan-orange" : "text-mnkhan-text-muted border-mnkhan-gray-border hover:border-mnkhan-orange"}`}
             >
-              {isAdmin ? 'Switch to Client Access' : 'Staff Portal Access'}
+              {isAdmin ? "Switch to Client Access" : "Staff Portal Access"}
             </button>
           </div>
           <h2 className="text-3x font-serif italic mb-2">
-            {isForgotPassword ? 'Reset Password' : (isAdmin ? 'Administrative Access' : (isSignup ? 'Create Account' : 'Secure Access'))}
+            {isForgotPassword
+              ? "Reset Password"
+              : isAdmin
+                ? "Administrative Access"
+                : isSignup
+                  ? "Create Account"
+                  : "Secure Access"}
           </h2>
           <p className="text-sm text-mnkhan-text-muted">
-            {isForgotPassword ? 'Enter your email to receive recovery instructions' : (isAdmin ? 'MNKHAN Internal Compliance & Admin' : (isSignup ? 'Join the MNKHAN client ecosystem' : 'Access your professional legal portal'))}
+            {isForgotPassword
+              ? "Enter your email to receive recovery instructions"
+              : isAdmin
+                ? "MNKHAN Internal Compliance & Admin"
+                : isSignup
+                  ? "Join the MNKHAN client ecosystem"
+                  : "Access your professional legal portal"}
           </p>
         </div>
 
@@ -115,39 +137,62 @@ const Login: React.FC<LoginProps> = ({ onClose, onSuccess }) => {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          {(!isForgotPassword && isSignup) && (
+          {!isForgotPassword && isSignup && (
             <>
               <div className="space-y-1">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-mnkhan-text-muted">Full Name</label>
-                <input 
-                  type="text" 
+                <label className="text-[10px] font-bold uppercase tracking-widest text-mnkhan-text-muted">
+                  Full Name
+                </label>
+                <input
+                  type="text"
                   required
                   value={formData.name}
-                  onChange={e => setFormData({...formData, name: e.target.value})}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
                   className="w-full border-b-2 border-mnkhan-gray-border focus:border-mnkhan-orange py-2 outline-none transition-colors"
                   placeholder="John Doe"
                 />
               </div>
               <div className="space-y-1">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-mnkhan-text-muted">Phone Number</label>
-                <input 
-                  type="tel" 
-                  required
-                  value={formData.phone}
-                  onChange={e => setFormData({...formData, phone: e.target.value})}
-                  className="w-full border-b-2 border-mnkhan-gray-border focus:border-mnkhan-orange py-2 outline-none transition-colors"
-                  placeholder="+91 98765 43210"
-                />
+                <label className="text-[10px] font-bold uppercase tracking-widest text-mnkhan-text-muted">
+                  Phone Number (10 Digits)
+                </label>
+                <div className="flex items-center gap-2 border-b-2 border-mnkhan-gray-border focus-within:border-mnkhan-orange transition-colors">
+                  <span className="text-mnkhan-charcoal font-bold py-2">
+                    +91
+                  </span>
+                  <input
+                    type="tel"
+                    pattern="[0-9]{10}"
+                    required
+                    value={formData.phone}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        phone: e.target.value
+                          .replace(/[^0-9]/g, "")
+                          .slice(0, 10),
+                      })
+                    }
+                    className="w-full py-2 outline-none"
+                    placeholder="9876543210"
+                  />
+                </div>
               </div>
             </>
           )}
           <div className="space-y-1">
-            <label className="text-[10px] font-bold uppercase tracking-widest text-mnkhan-text-muted">Email Address</label>
-            <input 
-              type="email" 
+            <label className="text-[10px] font-bold uppercase tracking-widest text-mnkhan-text-muted">
+              Email Address
+            </label>
+            <input
+              type="email"
               required
               value={formData.email}
-              onChange={e => setFormData({...formData, email: e.target.value})}
+              onChange={(e) =>
+                setFormData({ ...formData, email: e.target.value })
+              }
               className="w-full border-b-2 border-mnkhan-gray-border focus:border-mnkhan-orange py-2 outline-none transition-colors"
               placeholder="client@example.com"
             />
@@ -155,9 +200,11 @@ const Login: React.FC<LoginProps> = ({ onClose, onSuccess }) => {
           {!isForgotPassword && (
             <div className="space-y-1">
               <div className="flex justify-between items-center">
-                <label className="text-[10px] font-bold uppercase tracking-widest text-mnkhan-text-muted">Password</label>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-mnkhan-text-muted">
+                  Password
+                </label>
                 {!isSignup && (
-                  <button 
+                  <button
                     type="button"
                     onClick={() => setIsForgotPassword(true)}
                     className="text-[10px] font-bold text-mnkhan-orange hover:underline"
@@ -166,23 +213,31 @@ const Login: React.FC<LoginProps> = ({ onClose, onSuccess }) => {
                   </button>
                 )}
               </div>
-              <input 
-                type="password" 
+              <input
+                type="password"
                 required
                 value={formData.password}
-                onChange={e => setFormData({...formData, password: e.target.value})}
+                onChange={(e) =>
+                  setFormData({ ...formData, password: e.target.value })
+                }
                 className="w-full border-b-2 border-mnkhan-gray-border focus:border-mnkhan-orange py-2 outline-none transition-colors"
                 placeholder="••••••••"
               />
             </div>
           )}
 
-          <button 
+          <button
             type="submit"
             disabled={loading}
-            className={`w-full py-4 font-bold uppercase tracking-widest text-sm transition-all duration-300 shadow-lg disabled:opacity-50 text-white ${isAdmin ? 'bg-mnkhan-orange hover:bg-mnkhan-charcoal' : 'bg-mnkhan-charcoal hover:bg-mnkhan-orange'}`}
+            className={`w-full py-4 font-bold uppercase tracking-widest text-sm transition-all duration-300 shadow-lg disabled:opacity-50 text-white ${isAdmin ? "bg-mnkhan-orange hover:bg-mnkhan-charcoal" : "bg-mnkhan-charcoal hover:bg-mnkhan-orange"}`}
           >
-            {loading ? 'Processing...' : (isForgotPassword ? 'Reset Password' : (isSignup ? 'Register' : 'Authenticate'))}
+            {loading
+              ? "Processing..."
+              : isForgotPassword
+                ? "Reset Password"
+                : isSignup
+                  ? "Register"
+                  : "Authenticate"}
           </button>
         </form>
 
@@ -193,15 +248,17 @@ const Login: React.FC<LoginProps> = ({ onClose, onSuccess }) => {
                 Administrative access is restricted. Contact IT for credentials.
               </p>
             ) : (
-              <button 
+              <button
                 onClick={() => setIsSignup(!isSignup)}
                 className="text-xs font-bold text-mnkhan-orange hover:underline decoration-2 underline-offset-4"
               >
-                {isSignup ? 'Already have an account? Login' : "Don't have an account? Sign Up"}
+                {isSignup
+                  ? "Already have an account? Login"
+                  : "Don't have an account? Sign Up"}
               </button>
             )
           ) : (
-            <button 
+            <button
               onClick={() => setIsForgotPassword(false)}
               className="text-xs font-bold text-mnkhan-orange hover:underline decoration-2 underline-offset-4"
             >

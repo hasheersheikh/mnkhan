@@ -18,6 +18,11 @@ router.post("/signup", async (req, res) => {
         .json({ success: false, message: "Unauthorized role assignment" });
     }
 
+    // Phone number validation (+91 1234567890)
+    if (phone && !/^\+91 [0-9]{10}$/.test(phone)) {
+      return res.status(400).json({ success: false, message: "Invalid phone number format. Expected: +91 9876543210" });
+    }
+
     console.log(`[API] Signup attempt for: ${email}`);
 
     // Check if user exists in either collection to prevent collisions

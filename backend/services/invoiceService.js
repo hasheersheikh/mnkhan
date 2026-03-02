@@ -18,94 +18,122 @@ const generateInvoicePDF = async (data) => {
         resolve(result);
       });
 
-      // Logo on the Right
-      const logoPath = path.join(__dirname, '..', 'assets', 'logo.png');
-      if (fs.existsSync(logoPath)) {
-        doc.image(logoPath, 450, 45, { width: 100 });
-      }
+      // --- HEADER ---
+      // Logo text
+      doc.fillColor('#333132')
+         .font('Helvetica-Bold')
+         .fontSize(24)
+         .text('M.N KHAN', 50, 45, { continued: true })
+         .fillColor('#FF4612')
+         .text('.');
 
-      // Firm Details on the Left
-      doc
-        .fillColor('#1e1e1e')
-        .fontSize(20)
-        .text('MN KHAN & ASSOCIATES', 50, 50)
-        .fontSize(10)
-        .text('Legal Consultants & Practitioners', 50, 75)
-        .text('Plot No. C/5, Rathod Layout, Gorewada', 50, 90)
-        .text('Nagpur, Maharashtra - 440013', 50, 105)
-        .moveDown();
+      doc.fillColor('#333132')
+         .font('Helvetica')
+         .fontSize(14)
+         .text('& Associates', 50, 75);
 
-      // Invoice Label
-      doc
-        .fillColor('#E67E22') // MN Khan Orange
-        .fontSize(28)
-        .text('INVOICE', 50, 160, { align: 'right' });
+      doc.font('Helvetica-Oblique')
+         .fontSize(11)
+         .text('Defining the Future of Law.', 50, 95);
 
-      doc
-        .fillColor('#444444')
-        .fontSize(10)
-        .text(`Invoice Number: ${data.invoiceNumber || 'INV-' + Date.now().toString().slice(-6)}`, 50, 200, { align: 'right' })
-        .text(`Date: ${new Date().toLocaleDateString('en-IN')}`, 50, 215, { align: 'right' })
-        .moveDown();
+      // Invoice Title and Horizontal Line
+      const invoiceTitleY = 110;
+      doc.strokeColor('#BCBCBC')
+         .lineWidth(1)
+         .moveTo(50, invoiceTitleY + 20)
+         .lineTo(320, invoiceTitleY + 20)
+         .stroke();
 
-      // Bill To
-      doc
-        .fontSize(12)
-        .fillColor('#000000')
-        .text('Bill To:', 50, 200)
-        .fontSize(10)
-        .fillColor('#444444')
-        .text(data.customer.name, 50, 215)
-        .text(data.customer.email, 50, 230)
-        .moveDown();
+      doc.fillColor('#333132')
+         .font('Helvetica')
+         .fontSize(44)
+         .text('INVOICE', 350, invoiceTitleY, { align: 'right' });
 
-      // Table Header
-      const tableTop = 300;
-      doc
-        .fontSize(10)
-        .fillColor('#444444')
-        .text('Description', 50, tableTop)
-        .text('Amount (INR)', 450, tableTop, { align: 'right' });
+      // --- CLIENT & DATE INFO ---
+      const infoY = 180;
+      
+      // Issued To (Left)
+      doc.font('Helvetica-Bold').fontSize(10).fillColor('#333132').text('ISSUED TO:', 50, infoY);
+      doc.font('Helvetica').fontSize(10).fillColor('#333132');
+      doc.text(data.customer.name, 50, infoY + 15);
+      if (data.customer.company) doc.text(data.customer.company, 50, infoY + 30);
+      doc.text(data.customer.address || 'Street Address, City', 50, infoY + 45);
 
-      doc
-        .strokeColor('#aaaaaa')
-        .lineWidth(1)
-        .moveTo(50, tableTop + 15)
-        .lineTo(550, tableTop + 15)
-        .stroke();
+      // Pay To (Left, below Issued To)
+      const payToY = infoY + 80;
+      doc.font('Helvetica-Bold').fontSize(10).text('PAY TO:', 50, payToY);
+      doc.font('Helvetica').fontSize(10);
+      doc.text('Borcele Bank', 50, payToY + 15);
+      doc.text('Account Name: Adeline Palmerston', 50, payToY + 30);
+      doc.text('Account No.: 0123 4567 8901', 50, payToY + 45);
 
-      // Table Items
-      let currentY = tableTop + 25;
+      // Invoice Metadata (Right)
+      const metaX = 350;
+      const rowHeight = 15;
+      
+      doc.font('Helvetica-Bold').text('INVOICE NO:', metaX, infoY, { align: 'right', width: 120 });
+      doc.font('Helvetica').text(data.invoiceNumber || 'INV-0123', metaX + 130, infoY, { align: 'left' });
+
+      doc.font('Helvetica-Bold').text('DATE:', metaX, infoY + rowHeight, { align: 'right', width: 120 });
+      doc.font('Helvetica').text(new Date().toLocaleDateString('en-GB').replace(/\//g, '.'), metaX + 130, infoY + rowHeight, { align: 'left' });
+
+      doc.font('Helvetica-Bold').text('DUE DATE:', metaX, infoY + rowHeight * 2, { align: 'right', width: 120 });
+      const dueDate = new Date();
+      dueDate.setDate(dueDate.getDate() + 30);
+      doc.font('Helvetica').text(dueDate.toLocaleDateString('en-GB').replace(/\//g, '.'), metaX + 130, infoY + rowHeight * 2, { align: 'left' });
+
+      // --- TABLE ---
+      const tableTop = 380;
+      doc.strokeColor('#333132')
+         .lineWidth(1)
+         .moveTo(50, tableTop)
+         .lineTo(550, tableTop)
+         .stroke();
+
+      doc.font('Helvetica-Bold').fontSize(9).fillColor('#333132');
+      doc.text('DESCRIPTION', 50, tableTop + 10);
+      doc.text('UNIT PRICE', 300, tableTop + 10, { width: 80, align: 'right' });
+      doc.text('QTY', 400, tableTop + 10, { width: 50, align: 'right' });
+      doc.text('TOTAL', 480, tableTop + 10, { width: 70, align: 'right' });
+
+      doc.moveTo(50, tableTop + 25)
+         .lineTo(550, tableTop + 25)
+         .stroke();
+
+      let currentY = tableTop + 40;
+      doc.font('Helvetica').fontSize(9);
+      
       data.items.forEach(item => {
-        doc
-          .fontSize(10)
-          .text(item.description, 50, currentY)
-          .text(`₹${item.amount.toLocaleString('en-IN')}`, 450, currentY, { align: 'right' });
-        currentY += 20;
+        doc.text(item.description, 50, currentY, { width: 230 });
+        doc.text(`$${item.amount.toLocaleString()}`, 300, currentY, { width: 80, align: 'right' });
+        doc.text(item.qty || '1', 400, currentY, { width: 50, align: 'right' });
+        const lineTotal = item.amount * (item.qty || 1);
+        doc.text(`$${lineTotal.toLocaleString()}`, 480, currentY, { width: 70, align: 'right' });
+        currentY += 25;
       });
 
-      // Total
-      const totalY = Math.max(currentY + 20, 400);
-      doc
-        .strokeColor('#aaaaaa')
-        .lineWidth(1)
-        .moveTo(350, totalY)
-        .lineTo(550, totalY)
-        .stroke();
+      // --- SUMMARY ---
+      currentY = Math.max(currentY + 20, 500);
+      doc.strokeColor('#333132')
+         .lineWidth(1)
+         .moveTo(50, currentY)
+         .lineTo(550, currentY)
+         .stroke();
 
-      doc
-        .fontSize(12)
-        .fillColor('#444444')
-        .text('Total Amount:', 350, totalY + 10)
-        .fillColor('#E67E22')
-        .text(`₹${data.total.toLocaleString('en-IN')}`, 450, totalY + 10, { align: 'right' });
+      const summaryX = 400;
+      const summaryValX = 480;
+      const subtotal = data.total || data.items.reduce((sum, item) => sum + (item.amount * (item.qty || 1)), 0);
+      
+      doc.font('Helvetica-Bold').text('SUBTOTAL', 50, currentY + 10);
+      doc.text(`$${subtotal.toLocaleString()}`, summaryValX, currentY + 10, { width: 70, align: 'right' });
 
-      // Footer
-      doc
-        .fontSize(10)
-        .fillColor('#aaaaaa')
-        .text('Thank you for choosing MN Khan & Associates.', 50, 700, { align: 'center', width: 500 })
-        .text('This is a computer generated invoice and does not require a physical signature.', 50, 715, { align: 'center', width: 500 });
+      doc.font('Helvetica').text('Tax', summaryX, currentY + 25, { width: 50, align: 'right' });
+      doc.text('10%', summaryValX, currentY + 25, { width: 70, align: 'right' });
+
+      doc.font('Helvetica-Bold').fontSize(11).text('TOTAL', summaryX, currentY + 40, { width: 50, align: 'right' });
+      const tax = subtotal * 0.1;
+      const finalTotal = subtotal + tax;
+      doc.text(`$${finalTotal.toLocaleString()}`, summaryValX, currentY + 40, { width: 70, align: 'right' });
 
       doc.end();
     } catch (err) {
