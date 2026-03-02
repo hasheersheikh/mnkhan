@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router';
-import { getServices } from '../../api/services';
-import { addToCart } from '../../api/cart';
+import React, { useEffect, useState } from "react";
+import { Link } from "react-router";
+import { getServices } from "../../api/services";
+import { addToCart } from "../../api/cart";
 
 interface Service {
   _id: string;
@@ -14,20 +14,20 @@ const ServicesPage: React.FC = () => {
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const userRole = JSON.parse(localStorage.getItem('mnkhan_user') || '{}').role;
-  const isInternal = ['admin', 'super-admin', 'staff'].includes(userRole);
-  const isStaff = userRole === 'staff';
+  const userRole = JSON.parse(localStorage.getItem("mnkhan_user") || "{}").role;
+  const isInternal = ["admin", "super-admin", "staff"].includes(userRole);
+  const isStaff = userRole === "staff";
 
   useEffect(() => {
     getServices()
-      .then(res => {
+      .then((res) => {
         if (res.data.success) {
           setServices(res.data.services);
         }
         setLoading(false);
       })
-      .catch(err => {
-        console.error('Failed to fetch services:', err);
+      .catch((err) => {
+        console.error("Failed to fetch services:", err);
         setLoading(false);
       });
   }, []);
@@ -41,76 +41,88 @@ const ServicesPage: React.FC = () => {
   }
 
   return (
-    <div className="bg-white min-h-screen pb-32">
+    <div className="bg-white min-h-screen pb-20 md:pb-32">
       {/* Hero Section */}
-      <section className="bg-mnkhan-charcoal py-24 text-white relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-8 relative z-10">
-          <h1 className="text-6xl md:text-7xl font-serif italic mb-6">Expert Services.</h1>
-          <p className="text-xl text-white/60 max-w-2xl leading-relaxed">
-            Premium legal and compliance solutions tailored for modern businesses. 
-            Transparent pricing, expert guidance, and seamless execution.
+      <section className="bg-mnkhan-charcoal py-16 md:py-24 text-white relative overflow-hidden">
+        <div className="max-w-7xl mx-auto px-6 md:px-8 relative z-10">
+          <h1 className="text-4xl sm:text-6xl md:text-7xl font-serif italic mb-6">
+            Expert Services.
+          </h1>
+          <p className="text-lg md:text-xl text-white/60 max-w-2xl leading-relaxed">
+            Premium legal and compliance solutions tailored for modern
+            businesses. Transparent pricing, expert guidance, and seamless
+            execution.
           </p>
         </div>
         <div className="absolute top-0 right-0 w-1/2 h-full bg-mnkhan-orange/10 blur-[120px] rounded-full translate-x-1/2 -translate-y-1/2" />
       </section>
 
       {/* Services List */}
-      <section className="max-w-7xl mx-auto px-8 -mt-16 relative z-20">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {services.map(service => (
-            <div 
-              key={service._id} 
-              className="bg-white border border-mnkhan-gray-border p-10 shadow-sm hover:shadow-2xl hover:border-mnkhan-orange transition-all duration-500 flex flex-col group rounded-sm"
+      <section className="max-w-7xl mx-auto px-6 md:px-8 -mt-10 md:-mt-16 relative z-20">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+          {services.map((service) => (
+            <div
+              key={service._id}
+              className="bg-white border border-mnkhan-gray-border p-6 md:p-10 shadow-sm hover:shadow-2xl hover:border-mnkhan-orange transition-all duration-500 flex flex-col group rounded-sm"
             >
-              <div className="w-16 h-[2px] bg-mnkhan-orange mb-8 group-hover:w-full transition-all duration-500" />
-              <h2 className="text-3xl font-bold mb-4 tracking-tight group-hover:text-mnkhan-orange transition-colors">{service.name}</h2>
-              <p className="text-mnkhan-text-muted leading-relaxed mb-auto pb-8">
+              <div className="w-16 h-[2px] bg-mnkhan-orange mb-6 md:mb-8 group-hover:w-full transition-all duration-500" />
+              <h2 className="text-2xl md:text-3xl font-bold mb-4 tracking-tight group-hover:text-mnkhan-orange transition-colors">
+                {service.name}
+              </h2>
+              <p className="text-sm md:text-base text-mnkhan-text-muted leading-relaxed mb-auto pb-6 md:pb-8">
                 {service.description}
               </p>
-              
-              <div className="mt-8 pt-8 border-t border-mnkhan-gray-border flex items-center justify-between">
+
+              <div className="mt-6 pt-6 md:pt-8 border-t border-mnkhan-gray-border flex items-center justify-between">
                 {!isStaff && (
                   <div>
-                    {service.price && <p className="text-[10px] font-bold uppercase tracking-widest text-mnkhan-text-muted mb-1">Professional Fee</p>}
-                    <p className="text-2xl font-bold text-mnkhan-charcoal">
-                      {service.price ? `₹${service.price}` : ''}
+                    {service.price && (
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-mnkhan-text-muted mb-1">
+                        Professional Fee
+                      </p>
+                    )}
+                    <p className="text-xl md:text-2xl font-bold text-mnkhan-charcoal">
+                      {service.price ? `₹${service.price}` : ""}
                     </p>
                   </div>
                 )}
               </div>
-                <div className="flex flex-col sm:flex-row gap-3 mt-4">
-                  <Link 
-                    to={`/services/${service._id}`}
-                    className="bg-mnkhan-charcoal text-white px-6 py-3 font-bold uppercase tracking-widest text-[10px] hover:bg-mnkhan-orange transition-colors text-center"
+              <div className="flex flex-col sm:flex-row gap-3 mt-4">
+                <Link
+                  to={`/services/${service._id}`}
+                  className="bg-mnkhan-charcoal text-white px-6 py-3 font-bold uppercase tracking-widest text-[10px] hover:bg-mnkhan-orange transition-colors text-center"
+                >
+                  Details
+                </Link>
+                {localStorage.getItem("mnkhan_token") && !isInternal && (
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      addToCart(service._id)
+                        .then(() => alert(`${service.name} added to cart!`))
+                        .catch(() =>
+                          alert("Failed to add to cart. Maybe already added?"),
+                        );
+                    }}
+                    className="border border-mnkhan-charcoal text-mnkhan-charcoal px-6 py-3 font-bold uppercase tracking-widest text-[10px] hover:bg-mnkhan-charcoal hover:text-white transition-all text-center"
                   >
-                    Details
-                  </Link>
-                  {localStorage.getItem('mnkhan_token') && !isInternal && (
-                    <button 
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        addToCart(service._id)
-                          .then(() => alert(`${service.name} added to cart!`))
-                          .catch(() => alert('Failed to add to cart. Maybe already added?'));
-                      }}
-                      className="border border-mnkhan-charcoal text-mnkhan-charcoal px-6 py-3 font-bold uppercase tracking-widest text-[10px] hover:bg-mnkhan-charcoal hover:text-white transition-all"
-                    >
-                      Add to Cart
-                    </button>
-                  )}
-                </div>
+                    Add to Cart
+                  </button>
+                )}
+              </div>
             </div>
           ))}
         </div>
       </section>
 
       {/* Trust Quote */}
-      <section className="max-w-4xl mx-auto px-8 mt-40 text-center">
-        <p className="text-3xl font-serif italic text-mnkhan-charcoal leading-relaxed">
-          "MNKHAN provides more than just registration; we provide a foundation for your business growth."
+      <section className="max-w-4xl mx-auto px-6 md:px-8 mt-24 md:mt-40 text-center">
+        <p className="text-xl md:text-3xl font-serif italic text-mnkhan-charcoal leading-relaxed">
+          "MNKHAN provides more than just registration; we provide a foundation
+          for your business growth."
         </p>
-        <div className="w-20 h-1 bg-mnkhan-orange mx-auto mt-8" />
+        <div className="w-20 h-1 bg-mnkhan-orange mx-auto mt-6 md:mt-8" />
       </section>
     </div>
   );

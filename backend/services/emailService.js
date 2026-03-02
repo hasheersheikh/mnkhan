@@ -38,6 +38,7 @@ const sendEmail = async (mailOptions) => {
     }));
   }
 
+  console.log("[Email] Resend payload:", JSON.stringify({ ...payload, html: payload.html.substring(0, 50) + "..." }, null, 2));
   const { data, error } = await resend.emails.send(payload);
 
   if (error) {
@@ -919,12 +920,93 @@ const sendTaskUpdateEmail = async (user, task, eventName, note = "") => {
   }
 };
 
+/**
+ * Send account rejection email
+ * @param {object} user - User details
+ * @param {string} reason - Rejection reason
+ * @returns {Promise<object>} Email send result
+ */
+const sendAccountRejectionEmail = async (user, reason) => {
+  try {
+    const { name, email } = user;
+
+    const emailHtml = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Application Update</title>
+      <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;600;700&display=swap');
+        body { font-family: 'Inter', Arial, sans-serif; line-height: 1.6; color: #1e1e1e; margin: 0; padding: 0; background-color: #f5f5f5; }
+        .container { max-width: 600px; margin: 40px auto; background: #ffffff; border: 1px solid #e0e0e0; overflow: hidden; }
+        .header { background-color: #1e1e1e; padding: 40px 20px; text-align: center; border-bottom: 4px solid #dc3545; }
+        .header h1 { color: #ffffff; margin: 0; font-family: 'Playfair Display', serif; font-style: italic; font-size: 28px; letter-spacing: 1px; }
+        .header p { color: #dc3545; margin: 5px 0 0 0; font-size: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: 3px; }
+        .content { padding: 40px; }
+        .content h2 { font-family: 'Playfair Display', serif; font-style: italic; color: #1e1e1e; font-size: 22px; margin-top: 0; }
+        .info-box { background: #fffcfc; border: 1px solid #ffebeb; border-radius: 4px; padding: 25px; margin: 30px 0; }
+        .footer { background: #fafafa; padding: 30px; text-align: center; border-top: 1px solid #eee; }
+        .footer p { font-size: 11px; color: #888; margin: 5px 0; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>MN Khan & Associates</h1>
+          <p>Legal Excellence</p>
+        </div>
+        
+        <div class="content">
+          <h2>Application Review Update</h2>
+          <p>Hello <strong>${name}</strong>,</p>
+          <p>Thank you for your interest in registering with the <strong>MN Khan & Associates</strong> Client Portal.</p>
+          <p>After careful review of your application, we regret to inform you that we are unable to approve your account at this time.</p>
+          
+          <div class="info-box">
+            <p style="margin: 0; font-size: 14px; color: #555;"><strong>Reason for Decision:</strong><br><span style="font-style: italic; color: #dc3545;">"${reason || "Your application does not meet our current registration criteria."}"</span></p>
+          </div>
+          
+          <p style="font-size: 13px; color: #666;">If you believe there has been a misunderstanding or wish to provide additional information, please feel free to reach out to our administrative team.</p>
+        </div>
+        
+        <div class="footer">
+          <p><strong>MN Khan & Associates</strong></p>
+          <p>Administrative Registry Notice</p>
+        </div>
+      </div>
+    </body>
+    </html>
+    `;
+
+    const mailOptions = {
+      from: process.env.SMTP_FROM || process.env.SMTP_USER,
+      to: email,
+      subject: "Update regarding your MN Khan account application",
+      html: emailHtml,
+    };
+
+    if (process.env.ADMIN_NOTIFICATION_EMAIL) {
+      mailOptions.bcc = process.env.ADMIN_NOTIFICATION_EMAIL;
+    }
+
+    const result = await sendEmail(mailOptions);
+    console.log("[Email] Rejection email sent:", result.messageId);
+    return result;
+  } catch (error) {
+    console.error("[Email] Error sending rejection email:", error);
+    throw new Error("Failed to send rejection email");
+  }
+};
+
 module.exports = {
   sendConfirmationEmail,
   sendCancellationEmail,
   sendRescheduleEmail,
   sendAccountActivationEmail,
   sendAccountDeactivationEmail,
+  sendAccountRejectionEmail,
   sendServiceConfirmationEmail,
   sendTaskUpdateEmail,
   generateICSFile,

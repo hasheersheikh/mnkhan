@@ -1,4 +1,6 @@
 const PDFDocument = require('pdfkit');
+const path = require('path');
+const fs = require('fs');
 
 /**
  * Generate a professional invoice PDF as a buffer
@@ -16,15 +18,20 @@ const generateInvoicePDF = async (data) => {
         resolve(result);
       });
 
-      // Header
+      // Logo and Header
+      const logoPath = path.join(__dirname, '..', 'assets', 'logo.png');
+      if (fs.existsSync(logoPath)) {
+        doc.image(logoPath, 50, 45, { width: 100 });
+      }
+
       doc
         .fillColor('#444444')
         .fontSize(20)
-        .text('MN KHAN & ASSOCIATES', 50, 50)
+        .text('MN KHAN & ASSOCIATES', 160, 50)
         .fontSize(10)
-        .text('Legal Consultants & Practitioners', 50, 75)
-        .text('R-46, 2nd Floor, Khirki Extension', 50, 90)
-        .text('Malviya Nagar, New Delhi - 110017', 50, 105)
+        .text('Legal Consultants & Practitioners', 160, 75)
+        .text('Plot No. C/5, Rathod Layout, Gorewada', 160, 90)
+        .text('Nagpur, Maharashtra - 440013', 160, 105)
         .moveDown();
 
       // Invoice Label

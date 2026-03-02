@@ -13,9 +13,10 @@ const UserSchema = new mongoose.Schema({
   },
   status: {
     type: String,
-    enum: ["pending", "active", "deactivated"],
+    enum: ["pending", "active", "deactivated", "rejected"],
     default: "pending",
   },
+  rejectionReason: { type: String },
   createdAt: { type: Date, default: Date.now },
 });
 

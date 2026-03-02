@@ -181,8 +181,8 @@ router.patch(
   authorizeRole(["admin", "super-admin"]),
   async (req, res) => {
     try {
-      const { status } = req.body;
-      const validStatuses = ["pending", "active", "deactivated"];
+      const { status, rejectionReason } = req.body;
+      const validStatuses = ["pending", "active", "deactivated", "rejected"];
       
       if (!validStatuses.includes(status)) {
         return res.status(400).json({ success: false, message: "Invalid status" });
@@ -195,6 +195,9 @@ router.patch(
 
       const oldStatus = user.status;
       user.status = status;
+      if (status === "rejected") {
+        user.rejectionReason = rejectionReason;
+      }
       await user.save();
 
       // Send email notifications
@@ -202,6 +205,8 @@ router.patch(
         const emailService = require("../services/emailService");
         if (oldStatus === "pending" && status === "active") {
           await emailService.sendAccountActivationEmail(user);
+        } else if (status === "rejected") {
+          await emailService.sendAccountRejectionEmail(user, rejectionReason);
         } else if (status === "deactivated" && oldStatus !== "deactivated") {
           await emailService.sendAccountDeactivationEmail(user);
         }

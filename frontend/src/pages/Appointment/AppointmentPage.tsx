@@ -1,12 +1,12 @@
-import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router';
-import { 
-  createAppointment, 
-  verifyPayment, 
-  getHourlyRate, 
-  getAvailability
-} from '../../api/appointment';
-import type { TimeSlot, AppointmentData } from '../../api/appointment';
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router";
+import {
+  createAppointment,
+  verifyPayment,
+  getHourlyRate,
+  getAvailability,
+} from "../../api/appointment";
+import type { TimeSlot, AppointmentData } from "../../api/appointment";
 
 declare global {
   interface Window {
@@ -16,16 +16,16 @@ declare global {
 
 const AppointmentPage: React.FC = () => {
   const navigate = useNavigate();
-  
+
   // Form state
-  const [customerName, setCustomerName] = useState('');
-  const [customerEmail, setCustomerEmail] = useState('');
-  const [customerPhone, setCustomerPhone] = useState('');
-  const [selectedDate, setSelectedDate] = useState('');
-  const [selectedTime, setSelectedTime] = useState('');
+  const [customerName, setCustomerName] = useState("");
+  const [customerEmail, setCustomerEmail] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
+  const [selectedDate, setSelectedDate] = useState("");
+  const [selectedTime, setSelectedTime] = useState("");
   const [duration, setDuration] = useState(1);
-  const [notes, setNotes] = useState('');
-  
+  const [notes, setNotes] = useState("");
+
   // Data state
   const [hourlyRate, setHourlyRate] = useState<number>(0);
   const [availableSlots, setAvailableSlots] = useState<TimeSlot[]>([]);
@@ -35,8 +35,8 @@ const AppointmentPage: React.FC = () => {
 
   // Load Razorpay script
   useEffect(() => {
-    const script = document.createElement('script');
-    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
     script.async = true;
     document.body.appendChild(script);
     return () => {
@@ -51,8 +51,8 @@ const AppointmentPage: React.FC = () => {
         const response = await getHourlyRate();
         setHourlyRate(response.rate.rateInRupees);
       } catch (err) {
-        console.error('Error fetching hourly rate:', err);
-        setError('Unable to fetch pricing. Please try again later.');
+        console.error("Error fetching hourly rate:", err);
+        setError("Unable to fetch pricing. Please try again later.");
       }
     };
     fetchRate();
@@ -61,15 +61,15 @@ const AppointmentPage: React.FC = () => {
   // Fetch available slots when date changes
   useEffect(() => {
     if (!selectedDate) return;
-    
+
     const fetchSlots = async () => {
       setLoadingSlots(true);
-      setSelectedTime('');
+      setSelectedTime("");
       try {
         const response = await getAvailability(selectedDate);
         setAvailableSlots(response.slots);
       } catch (err) {
-        console.error('Error fetching availability:', err);
+        console.error("Error fetching availability:", err);
         setAvailableSlots([]);
       } finally {
         setLoadingSlots(false);
@@ -85,16 +85,18 @@ const AppointmentPage: React.FC = () => {
   const getMinDate = () => {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
-    return tomorrow.toISOString().split('T')[0];
+    return tomorrow.toISOString().split("T")[0];
   };
 
   // Check if selected duration is available
   const isValidDuration = () => {
     if (!selectedTime || availableSlots.length === 0) return true;
-    
-    const selectedIndex = availableSlots.findIndex(s => s.startTime === selectedTime);
+
+    const selectedIndex = availableSlots.findIndex(
+      (s) => s.startTime === selectedTime,
+    );
     if (selectedIndex === -1) return false;
-    
+
     // Check if consecutive slots are available for the duration
     for (let i = 0; i < duration; i++) {
       const slot = availableSlots[selectedIndex + i];
@@ -107,9 +109,9 @@ const AppointmentPage: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    
+
     if (!isValidDuration()) {
-      setError('Selected duration is not available for this time slot.');
+      setError("Selected duration is not available for this time slot.");
       return;
     }
 
@@ -131,7 +133,7 @@ const AppointmentPage: React.FC = () => {
 
       // Check for bypass
       if (response.paymentBypassed) {
-        navigate('/appointment/success', {
+        navigate("/appointment/success", {
           state: {
             appointment: response.appointment,
           },
@@ -140,7 +142,7 @@ const AppointmentPage: React.FC = () => {
       }
 
       if (!response.razorpay) {
-        setError('Payment initialization failed. Please try again.');
+        setError("Payment initialization failed. Please try again.");
         return;
       }
 
@@ -149,7 +151,7 @@ const AppointmentPage: React.FC = () => {
         key: response.razorpay.key,
         amount: response.razorpay.amount,
         currency: response.razorpay.currency,
-        name: 'MN Khan',
+        name: "MN Khan",
         description: `Appointment for ${duration} hour(s) on ${selectedDate}`,
         order_id: response.razorpay.orderId,
         prefill: {
@@ -158,7 +160,7 @@ const AppointmentPage: React.FC = () => {
           contact: customerPhone,
         },
         theme: {
-          color: '#FF4612',
+          color: "#FF4612",
         },
         handler: async function (razorpayResponse: any) {
           try {
@@ -171,14 +173,14 @@ const AppointmentPage: React.FC = () => {
             });
 
             // Navigate to success page
-            navigate('/appointment/success', {
+            navigate("/appointment/success", {
               state: {
                 appointment: verifyResponse.appointment,
               },
             });
           } catch (err) {
-            console.error('Payment verification failed:', err);
-            setError('Payment verification failed. Please contact support.');
+            console.error("Payment verification failed:", err);
+            setError("Payment verification failed. Please contact support.");
           }
         },
         modal: {
@@ -191,8 +193,11 @@ const AppointmentPage: React.FC = () => {
       const razorpay = new window.Razorpay(options);
       razorpay.open();
     } catch (err: any) {
-      console.error('Error creating appointment:', err);
-      setError(err.response?.data?.message || 'Failed to create appointment. Please try again.');
+      console.error("Error creating appointment:", err);
+      setError(
+        err.response?.data?.message ||
+          "Failed to create appointment. Please try again.",
+      );
     } finally {
       setLoading(false);
     }
@@ -201,38 +206,44 @@ const AppointmentPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-mnkhan-gray-bg py-12 px-4 relative">
       {/* Dot Grid Background */}
-      <div 
-        className="absolute inset-0 z-0 opacity-[0.03]" 
-        style={{ 
-          backgroundImage: 'radial-gradient(circle, #333132 1px, transparent 1px)', 
-          backgroundSize: '30px 30px' 
-        }} 
+      <div
+        className="absolute inset-0 z-0 opacity-[0.03]"
+        style={{
+          backgroundImage:
+            "radial-gradient(circle, #333132 1px, transparent 1px)",
+          backgroundSize: "30px 30px",
+        }}
       />
 
       <div className="max-w-5xl mx-auto relative z-10">
         {/* Header */}
-        <div className="text-center mb-12">
-          <div className="flex items-center justify-center gap-3 mb-6">
-            <span className="relative flex h-3 w-3">
+        <div className="text-center mb-8 md:mb-12">
+          <div className="flex items-center justify-center gap-2 md:gap-3 mb-4 md:mb-6">
+            <span className="relative flex h-2 w-2 md:h-3 md:w-3">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-mnkhan-orange opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-mnkhan-orange"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 md:h-3 md:w-3 bg-mnkhan-orange"></span>
             </span>
-            <span className="text-xs font-bold uppercase tracking-widest text-mnkhan-text-muted">
+            <span className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-mnkhan-text-muted">
               Scheduling Available
             </span>
           </div>
-          <h1 className="text-5xl md:text-6xl font-serif text-mnkhan-charcoal mb-4 tracking-tight">
-            Book an <span className="text-mnkhan-orange italic">Appointment</span>
+          <h1 className="text-3xl sm:text-5xl md:text-6xl font-serif text-mnkhan-charcoal mb-4 tracking-tight">
+            Book an{" "}
+            <span className="text-mnkhan-orange italic">Appointment</span>
           </h1>
-          <p className="text-mnkhan-text-muted text-lg max-w-xl mx-auto">
-            Schedule a consultation session with an expert. Select your preferred date, time, and duration.
+          <p className="text-mnkhan-text-muted text-sm md:text-lg max-w-xl mx-auto px-4">
+            Schedule a consultation session with an expert. Select your
+            preferred date, time, and duration.
           </p>
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Booking Form */}
-          <div className="md:col-span-2">
-            <form onSubmit={handleSubmit} className="bg-white border border-mnkhan-gray-border rounded-lg p-8 shadow-sm">
+          <div className="md:col-span-2 order-2 md:order-1">
+            <form
+              onSubmit={handleSubmit}
+              className="bg-white border border-mnkhan-gray-border rounded-lg p-6 md:p-8 shadow-sm"
+            >
               {error && (
                 <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
                   {error}
@@ -242,13 +253,17 @@ const AppointmentPage: React.FC = () => {
               {/* Personal Information */}
               <div className="mb-8">
                 <h3 className="text-xl font-serif text-mnkhan-charcoal mb-4 flex items-center">
-                  <span className="w-8 h-8 rounded-full bg-mnkhan-orange text-white flex items-center justify-center mr-3 text-sm font-bold">1</span>
+                  <span className="w-8 h-8 rounded-full bg-mnkhan-orange text-white flex items-center justify-center mr-3 text-sm font-bold">
+                    1
+                  </span>
                   Personal Information
                 </h3>
-                
+
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-mnkhan-text-muted text-sm mb-2 font-bold uppercase tracking-wide">Full Name *</label>
+                    <label className="block text-mnkhan-text-muted text-sm mb-2 font-bold uppercase tracking-wide">
+                      Full Name *
+                    </label>
                     <input
                       type="text"
                       value={customerName}
@@ -259,7 +274,9 @@ const AppointmentPage: React.FC = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-mnkhan-text-muted text-sm mb-2 font-bold uppercase tracking-wide">Phone Number *</label>
+                    <label className="block text-mnkhan-text-muted text-sm mb-2 font-bold uppercase tracking-wide">
+                      Phone Number *
+                    </label>
                     <input
                       type="tel"
                       value={customerPhone}
@@ -270,9 +287,11 @@ const AppointmentPage: React.FC = () => {
                     />
                   </div>
                 </div>
-                
+
                 <div className="mt-4">
-                  <label className="block text-mnkhan-text-muted text-sm mb-2 font-bold uppercase tracking-wide">Email Address *</label>
+                  <label className="block text-mnkhan-text-muted text-sm mb-2 font-bold uppercase tracking-wide">
+                    Email Address *
+                  </label>
                   <input
                     type="email"
                     value={customerEmail}
@@ -287,13 +306,17 @@ const AppointmentPage: React.FC = () => {
               {/* Date & Time Selection */}
               <div className="mb-8">
                 <h3 className="text-xl font-serif text-mnkhan-charcoal mb-4 flex items-center">
-                  <span className="w-8 h-8 rounded-full bg-mnkhan-orange text-white flex items-center justify-center mr-3 text-sm font-bold">2</span>
+                  <span className="w-8 h-8 rounded-full bg-mnkhan-orange text-white flex items-center justify-center mr-3 text-sm font-bold">
+                    2
+                  </span>
                   Select Date & Time
                 </h3>
-                
+
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-mnkhan-text-muted text-sm mb-2 font-bold uppercase tracking-wide">Date *</label>
+                    <label className="block text-mnkhan-text-muted text-sm mb-2 font-bold uppercase tracking-wide">
+                      Date *
+                    </label>
                     <input
                       type="date"
                       value={selectedDate}
@@ -304,7 +327,9 @@ const AppointmentPage: React.FC = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-mnkhan-text-muted text-sm mb-2 font-bold uppercase tracking-wide">Duration (Hours) *</label>
+                    <label className="block text-mnkhan-text-muted text-sm mb-2 font-bold uppercase tracking-wide">
+                      Duration (Hours) *
+                    </label>
                     <select
                       value={duration}
                       onChange={(e) => setDuration(Number(e.target.value))}
@@ -312,7 +337,7 @@ const AppointmentPage: React.FC = () => {
                     >
                       {[1, 2, 3, 4, 5, 6].map((h) => (
                         <option key={h} value={h}>
-                          {h} hour{h > 1 ? 's' : ''}
+                          {h} hour{h > 1 ? "s" : ""}
                         </option>
                       ))}
                     </select>
@@ -322,11 +347,17 @@ const AppointmentPage: React.FC = () => {
                 {/* Time Slots */}
                 {selectedDate && (
                   <div className="mt-4">
-                    <label className="block text-mnkhan-text-muted text-sm mb-2 font-bold uppercase tracking-wide">Available Time Slots *</label>
+                    <label className="block text-mnkhan-text-muted text-sm mb-2 font-bold uppercase tracking-wide">
+                      Available Time Slots *
+                    </label>
                     {loadingSlots ? (
-                      <div className="text-mnkhan-text-muted py-4">Loading available slots...</div>
+                      <div className="text-mnkhan-text-muted py-4">
+                        Loading available slots...
+                      </div>
                     ) : availableSlots.length === 0 ? (
-                      <div className="text-mnkhan-orange py-4">No slots available for this date.</div>
+                      <div className="text-mnkhan-orange py-4">
+                        No slots available for this date.
+                      </div>
                     ) : (
                       <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
                         {availableSlots.map((slot) => (
@@ -337,10 +368,10 @@ const AppointmentPage: React.FC = () => {
                             disabled={!slot.available}
                             className={`px-3 py-2 rounded-lg text-sm font-bold transition ${
                               selectedTime === slot.startTime
-                                ? 'bg-mnkhan-orange text-white'
+                                ? "bg-mnkhan-orange text-white"
                                 : slot.available
-                                ? 'bg-white text-mnkhan-charcoal hover:border-mnkhan-orange border border-mnkhan-gray-border'
-                                : 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200'
+                                  ? "bg-white text-mnkhan-charcoal hover:border-mnkhan-orange border border-mnkhan-gray-border"
+                                  : "bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200"
                             }`}
                           >
                             {slot.startTime}
@@ -355,7 +386,9 @@ const AppointmentPage: React.FC = () => {
               {/* Notes */}
               <div className="mb-8">
                 <h3 className="text-xl font-serif text-mnkhan-charcoal mb-4 flex items-center">
-                  <span className="w-8 h-8 rounded-full bg-mnkhan-orange text-white flex items-center justify-center mr-3 text-sm font-bold">3</span>
+                  <span className="w-8 h-8 rounded-full bg-mnkhan-orange text-white flex items-center justify-center mr-3 text-sm font-bold">
+                    3
+                  </span>
                   Additional Notes
                 </h3>
                 <textarea
@@ -370,14 +403,36 @@ const AppointmentPage: React.FC = () => {
               {/* Submit Button */}
               <button
                 type="submit"
-                disabled={loading || !selectedTime || !customerName || !customerEmail || !customerPhone}
+                disabled={
+                  loading ||
+                  !selectedTime ||
+                  !customerName ||
+                  !customerEmail ||
+                  !customerPhone
+                }
                 className="w-full py-4 px-6 rounded-lg bg-mnkhan-charcoal hover:bg-mnkhan-orange text-white font-bold text-lg transition disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wide"
               >
                 {loading ? (
                   <span className="flex items-center justify-center">
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    <svg
+                      className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
                     </svg>
                     Processing...
                   </span>
@@ -389,28 +444,34 @@ const AppointmentPage: React.FC = () => {
           </div>
 
           {/* Price Summary Sidebar */}
-          <div className="md:col-span-1">
-            <div className="bg-white border border-mnkhan-gray-border rounded-lg p-6 shadow-sm sticky top-8">
-              <h3 className="text-xl font-serif text-mnkhan-charcoal mb-6 border-b-2 border-mnkhan-orange pb-2 inline-block">Booking Summary</h3>
-              
+          <div className="md:col-span-1 order-1 md:order-2">
+            <div className="bg-white border border-mnkhan-gray-border rounded-lg p-6 shadow-sm sticky top-24">
+              <h3 className="text-xl font-serif text-mnkhan-charcoal mb-6 border-b-2 border-mnkhan-orange pb-2 inline-block">
+                Booking Summary
+              </h3>
+
               <div className="space-y-4">
                 <div className="flex justify-between text-mnkhan-text-muted">
                   <span>Hourly Rate</span>
-                  <span className="font-bold text-mnkhan-charcoal">₹{hourlyRate.toLocaleString()}</span>
+                  <span className="font-bold text-mnkhan-charcoal">
+                    ₹{hourlyRate.toLocaleString()}
+                  </span>
                 </div>
                 <div className="flex justify-between text-mnkhan-text-muted">
                   <span>Duration</span>
-                  <span className="font-bold text-mnkhan-charcoal">{duration} hour{duration > 1 ? 's' : ''}</span>
+                  <span className="font-bold text-mnkhan-charcoal">
+                    {duration} hour{duration > 1 ? "s" : ""}
+                  </span>
                 </div>
 
                 {selectedDate && (
                   <div className="flex justify-between text-mnkhan-text-muted">
                     <span>Date</span>
                     <span className="font-bold text-mnkhan-charcoal">
-                      {new Date(selectedDate).toLocaleDateString('en-IN', {
-                        weekday: 'short',
-                        month: 'short',
-                        day: 'numeric'
+                      {new Date(selectedDate).toLocaleDateString("en-IN", {
+                        weekday: "short",
+                        month: "short",
+                        day: "numeric",
                       })}
                     </span>
                   </div>
@@ -419,14 +480,18 @@ const AppointmentPage: React.FC = () => {
                 {selectedTime && (
                   <div className="flex justify-between text-mnkhan-text-muted">
                     <span>Time</span>
-                    <span className="font-bold text-mnkhan-charcoal">{selectedTime}</span>
+                    <span className="font-bold text-mnkhan-charcoal">
+                      {selectedTime}
+                    </span>
                   </div>
                 )}
-                
+
                 <hr className="border-mnkhan-gray-border" />
-                
+
                 <div className="flex justify-between items-center pt-2">
-                  <span className="text-mnkhan-text-muted font-bold uppercase text-xs tracking-wide">Total Amount</span>
+                  <span className="text-mnkhan-text-muted font-bold uppercase text-xs tracking-wide">
+                    Total Amount
+                  </span>
                   <span className="text-3xl font-bold text-mnkhan-orange">
                     ₹{totalPrice.toLocaleString()}
                   </span>
@@ -435,9 +500,14 @@ const AppointmentPage: React.FC = () => {
 
               <div className="mt-6 p-4 bg-mnkhan-charcoal rounded-lg">
                 <p className="text-white text-sm">
-                  <span className="text-mnkhan-orange">✓</span> Secure payment via Razorpay<br />
-                  <span className="text-mnkhan-orange">✓</span> Google Meet link included<br />
-                  <span className="text-mnkhan-orange">✓</span> Calendar invite sent automatically
+                  <span className="text-mnkhan-orange">✓</span> Secure payment
+                  via Razorpay
+                  <br />
+                  <span className="text-mnkhan-orange">✓</span> Google Meet link
+                  included
+                  <br />
+                  <span className="text-mnkhan-orange">✓</span> Calendar invite
+                  sent automatically
                 </p>
               </div>
             </div>
