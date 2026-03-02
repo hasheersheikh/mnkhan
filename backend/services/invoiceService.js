@@ -63,9 +63,9 @@ const generateInvoicePDF = async (data) => {
       doc.font('Helvetica-Bold').fontSize(10).text('PAID TO:', 50, payToY);
       doc.font('Helvetica').fontSize(10);
       doc.text('MN Khan & Associates', 50, payToY + 15);
-      doc.text('Najma House, Plot No C/5', 50, payToY + 15);
-      doc.text('Rathod Layout, Anant Nagar', 50, payToY + 15);
-      doc.text('Nagpur - 440013', 50, payToY + 15);
+      doc.text('Najma House, Plot No C/5', 50, payToY + 28);
+      doc.text('Rathod Layout, Anant Nagar', 50, payToY + 41);
+      doc.text('Nagpur - 440013', 50, payToY + 54);
 
       // Invoice Metadata (Right)
       const metaX = 350;
