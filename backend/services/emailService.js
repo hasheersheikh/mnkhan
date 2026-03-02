@@ -576,7 +576,7 @@ const sendAccountActivationEmail = async (user) => {
           <p>You now have full access to the Secure Client Portal to manage your legal matters, upload documents, and track procedural progress in real-time.</p>
           
           <div class="btn-container">
-            <a href="${process.env.FRONTEND_URL || "http://nodes.mnkhan.com"}" class="btn">Access Portal</a>
+            <a href="${process.env.FRONTEND_URL || "http://nodes.mnkhan.online"}" class="btn">Access Portal</a>
           </div>
           
           <p style="font-size: 13px; color: #666;">If you require technical assistance or have questions regarding your account, please reply to this notice.</p>
@@ -776,7 +776,7 @@ const sendServiceConfirmationEmail = async (user, services, totalAmount, orderId
           <p style="font-size: 13px; color: #444;">Please access your Secure Client Portal to upload any prerequisite documents and track the lifecycle of your matters.</p>
           
           <div class="btn-container">
-            <a href="${process.env.FRONTEND_URL || "http://nodes.mnkhan.com"}/portal" class="btn">View My Matters</a>
+            <a href="${process.env.FRONTEND_URL || "http://nodes.mnkhan.online"}/portal" class="btn">View My Matters</a>
           </div>
           
           <p style="font-size: 11px; color: #888; text-align: center;">Your official invoice has been attached to this communication.</p>
@@ -884,7 +884,7 @@ const sendTaskUpdateEmail = async (user, task, eventName, note = "") => {
           </div>
           
           <div class="btn-container">
-            <a href="${process.env.FRONTEND_URL || "http://nodes.mnkhan.com"}/portal" class="btn">Examine Update</a>
+            <a href="${process.env.FRONTEND_URL || "http://nodes.mnkhan.online"}/portal" class="btn">Examine Update</a>
           </div>
           
           <p style="font-size: 12px; color: #888; text-align: center;">You can examine the full case history and timeline in your client portal.</p>

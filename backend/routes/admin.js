@@ -6,7 +6,7 @@ const Person = require("../models/Person");
 const { authenticateToken, authorizeRole } = require("../middleware/auth");
 
 // Internal helper for initial setup
-const PRIMARY_ADMIN_EMAIL = "admin@mnkhan.com";
+const PRIMARY_ADMIN_EMAIL = "admin@mnkhan.online";
 
 router.post("/setup", async (req, res) => {
   try {

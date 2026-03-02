@@ -178,7 +178,7 @@ const ManageStaff: React.FC = () => {
                   <input
                     type="email"
                     required
-                    placeholder="staff@mnkhan.com"
+                    placeholder="staff@mnkhan.online"
                     value={form.email}
                     onChange={(e) =>
                       setForm({ ...form, email: e.target.value })
