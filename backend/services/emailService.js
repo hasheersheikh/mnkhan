@@ -1,23 +1,50 @@
-const nodemailer = require("nodemailer");
+const { Resend } = require("resend");
 const ics = require("ics");
 
-// Create reusable transporter
-const createTransporter = () => {
-  return nodemailer.createTransport({
-    host: "smtp.gmail.com",
-  port: 587,
-  secure: false,
-  requireTLS: true,
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASS, // Expected to be an App Password
-    },
-    connectionTimeout: 30000, // 30 seconds
-    greetingTimeout: 30000,
-    socketTimeout: 45000,
-    debug: true, // Enable debug logs
-    logger: true, // Log to console
-  });
+// Resend client (uses HTTPS - works on Render)
+const getResendClient = () => {
+  if (!process.env.RESEND_API_KEY) {
+    throw new Error("RESEND_API_KEY environment variable is not set");
+  }
+  return new Resend(process.env.RESEND_API_KEY);
+};
+
+/**
+ * Send an email via Resend API (HTTPS-based, bypasses SMTP port blocking on Render)
+ * @param {object} mailOptions - { from, to, subject, html, bcc, attachments }
+ */
+const sendEmail = async (mailOptions) => {
+  const resend = getResendClient();
+
+  const payload = {
+    from: mailOptions.from || process.env.SMTP_FROM || process.env.SMTP_USER,
+    to: Array.isArray(mailOptions.to) ? mailOptions.to : [mailOptions.to],
+    subject: mailOptions.subject,
+    html: mailOptions.html,
+  };
+
+  if (mailOptions.bcc) {
+    payload.bcc = Array.isArray(mailOptions.bcc)
+      ? mailOptions.bcc
+      : [mailOptions.bcc];
+  }
+
+  if (mailOptions.attachments && mailOptions.attachments.length > 0) {
+    payload.attachments = mailOptions.attachments.map((att) => ({
+      filename: att.filename,
+      content: Buffer.isBuffer(att.content)
+        ? att.content
+        : Buffer.from(att.content),
+    }));
+  }
+
+  const { data, error } = await resend.emails.send(payload);
+
+  if (error) {
+    throw new Error(`Resend API error: ${JSON.stringify(error)}`);
+  }
+
+  return { messageId: data.id };
 };
 
 /**
@@ -98,7 +125,6 @@ const generateICSFile = (appointment) => {
 const sendConfirmationEmail = async (appointment, invoiceBuffer = null) => {
   console.log("[Email] Debug env ADMIN_NOTIFICATION_EMAIL:", process.env.ADMIN_NOTIFICATION_EMAIL);
   try {
-    const transporter = createTransporter();
     const {
       customerName,
       customerEmail,
@@ -260,7 +286,7 @@ const sendConfirmationEmail = async (appointment, invoiceBuffer = null) => {
 
     console.log(`[Email] Sending confirmation to: ${mailOptions.to}, BCC: ${mailOptions.bcc || 'None'}`);
 
-    const result = await transporter.sendMail(mailOptions);
+    const result = await sendEmail(mailOptions);
     console.log("[Email] Confirmation email sent:", result.messageId);
     return result;
   } catch (error) {
@@ -277,7 +303,6 @@ const sendConfirmationEmail = async (appointment, invoiceBuffer = null) => {
  */
 const sendCancellationEmail = async (appointment, reason = "") => {
   try {
-    const transporter = createTransporter();
     const { customerName, customerEmail, date, startTime } = appointment;
 
     const appointmentDate = new Date(date);
@@ -350,7 +375,7 @@ const sendCancellationEmail = async (appointment, reason = "") => {
 
     console.log(`[Email] Sending cancellation to: ${mailOptions.to}, BCC: ${mailOptions.bcc || 'None'}`);
 
-    const result = await transporter.sendMail(mailOptions);
+    const result = await sendEmail(mailOptions);
     console.log("[Email] Cancellation email sent:", result.messageId);
     return result;
   } catch (error) {
@@ -367,7 +392,6 @@ const sendCancellationEmail = async (appointment, reason = "") => {
  */
 const sendRescheduleEmail = async (appointment, previousDetails) => {
   try {
-    const transporter = createTransporter();
     const {
       customerName,
       customerEmail,
@@ -498,7 +522,7 @@ const sendRescheduleEmail = async (appointment, previousDetails) => {
       mailOptions.bcc = process.env.ADMIN_NOTIFICATION_EMAIL;
     }
 
-    const result = await transporter.sendMail(mailOptions);
+    const result = await sendEmail(mailOptions);
     console.log("[Email] Reschedule email sent:", result.messageId);
     return result;
   } catch (error) {
@@ -514,7 +538,6 @@ const sendRescheduleEmail = async (appointment, previousDetails) => {
  */
 const sendAccountActivationEmail = async (user) => {
   try {
-    const transporter = createTransporter();
     const { name, email } = user;
 
     const emailHtml = `
@@ -579,7 +602,7 @@ const sendAccountActivationEmail = async (user) => {
       mailOptions.bcc = process.env.ADMIN_NOTIFICATION_EMAIL;
     }
 
-    const result = await transporter.sendMail(mailOptions);
+    const result = await sendEmail(mailOptions);
     console.log("[Email] Activation email sent:", result.messageId);
     return result;
   } catch (error) {
@@ -595,7 +618,6 @@ const sendAccountActivationEmail = async (user) => {
  */
 const sendAccountDeactivationEmail = async (user) => {
   try {
-    const transporter = createTransporter();
     const { name, email } = user;
 
     const emailHtml = `
@@ -658,7 +680,7 @@ const sendAccountDeactivationEmail = async (user) => {
       mailOptions.bcc = process.env.ADMIN_NOTIFICATION_EMAIL;
     }
 
-    const result = await transporter.sendMail(mailOptions);
+    const result = await sendEmail(mailOptions);
     console.log("[Email] Deactivation email sent:", result.messageId);
     return result;
   } catch (error) {
@@ -678,7 +700,6 @@ const sendAccountDeactivationEmail = async (user) => {
  */
 const sendServiceConfirmationEmail = async (user, services, totalAmount, orderId, invoiceBuffer = null) => {
   try {
-    const transporter = createTransporter();
     const { name, email } = user;
 
     const formattedAmount = (totalAmount / 100).toLocaleString("en-IN", {
@@ -793,7 +814,7 @@ const sendServiceConfirmationEmail = async (user, services, totalAmount, orderId
       mailOptions.bcc = process.env.ADMIN_NOTIFICATION_EMAIL;
     }
 
-    const result = await transporter.sendMail(mailOptions);
+    const result = await sendEmail(mailOptions);
     console.log("[Email] Service confirmation sent:", result.messageId);
     return result;
   } catch (error) {
