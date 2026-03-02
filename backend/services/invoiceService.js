@@ -18,20 +18,21 @@ const generateInvoicePDF = async (data) => {
         resolve(result);
       });
 
-      // Logo and Header
+      // Logo on the Right
       const logoPath = path.join(__dirname, '..', 'assets', 'logo.png');
       if (fs.existsSync(logoPath)) {
-        doc.image(logoPath, 50, 45, { width: 100 });
+        doc.image(logoPath, 450, 45, { width: 100 });
       }
 
+      // Firm Details on the Left
       doc
-        .fillColor('#444444')
+        .fillColor('#1e1e1e')
         .fontSize(20)
-        .text('MN KHAN & ASSOCIATES', 160, 50)
+        .text('MN KHAN & ASSOCIATES', 50, 50)
         .fontSize(10)
-        .text('Legal Consultants & Practitioners', 160, 75)
-        .text('Plot No. C/5, Rathod Layout, Gorewada', 160, 90)
-        .text('Nagpur, Maharashtra - 440013', 160, 105)
+        .text('Legal Consultants & Practitioners', 50, 75)
+        .text('Plot No. C/5, Rathod Layout, Gorewada', 50, 90)
+        .text('Nagpur, Maharashtra - 440013', 50, 105)
         .moveDown();
 
       // Invoice Label

@@ -221,6 +221,27 @@ router.patch(
   }
 );
 
+// Admin: Delete client permanently
+router.delete(
+  "/users/:id",
+  authenticateToken,
+  authorizeRole(["admin", "super-admin"]),
+  async (req, res) => {
+    try {
+      const user = await User.findById(req.params.id);
+      if (!user) {
+        return res.status(404).json({ success: false, message: "User not found" });
+      }
+
+      await User.findByIdAndDelete(req.params.id);
+      console.log(`[Admin] Permanent deletion of client: ${user.email}`);
+      res.json({ success: true, message: "Client account has been permanently removed" });
+    } catch (err) {
+      res.status(500).json({ success: false, message: err.message });
+    }
+  }
+);
+
 // Admin: Reset client password
 router.post(
   "/users/:id/reset-password",

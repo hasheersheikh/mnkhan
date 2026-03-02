@@ -3,6 +3,7 @@ import {
   getUsers,
   updateUserStatus,
   resetClientPassword,
+  deleteClient,
 } from "../../api/admin";
 
 interface User {
@@ -57,6 +58,28 @@ const ManageClients: React.FC = () => {
       }
     } catch (err: any) {
       alert(err.response?.data?.message || "Failed to update user status");
+    } finally {
+      setUpdating(null);
+    }
+  };
+
+  const handleForceDelete = async (id: string, name: string) => {
+    if (
+      !window.confirm(
+        `CRITICAL: Are you sure you want to PERMANENTLY delete client "${name}"? This action cannot be undone.`,
+      )
+    ) {
+      return;
+    }
+
+    setUpdating(id);
+    try {
+      const res = await deleteClient(id);
+      if (res.data.success) {
+        setUsers(users.filter((u) => u._id !== id));
+      }
+    } catch (err: any) {
+      alert(err.response?.data?.message || "Failed to delete client");
     } finally {
       setUpdating(null);
     }
@@ -239,6 +262,13 @@ const ManageClients: React.FC = () => {
                         className="border border-mnkhan-charcoal text-mnkhan-charcoal px-4 py-2 text-[10px] font-bold uppercase tracking-widest hover:bg-mnkhan-charcoal hover:text-white transition-colors"
                       >
                         Reset PWD
+                      </button>
+                      <button
+                        onClick={() => handleForceDelete(user._id, user.name)}
+                        disabled={!!updating}
+                        className="border border-red-600 text-red-600 px-4 py-2 text-[10px] font-bold uppercase tracking-widest hover:bg-red-600 hover:text-white transition-colors disabled:opacity-50"
+                      >
+                        {updating === user._id ? "..." : "Delete"}
                       </button>
                     </div>
                   </td>

@@ -3,6 +3,7 @@ import client from './client';
 export const getUsers = () => client.get('/admin/users');
 export const updateUserStatus = (id: string, status: string, rejectionReason?: string) => client.patch(`/admin/users/${id}/status`, { status, rejectionReason });
 export const resetClientPassword = (id: string, password: string) => client.post(`/admin/users/${id}/reset-password`, { password });
+export const deleteClient = (id: string) => client.delete(`/admin/users/${id}`);
 
 export const getStaff = () => client.get('/admin/staff');
 export const createStaff = (data: any) => client.post('/admin/staff', data);
