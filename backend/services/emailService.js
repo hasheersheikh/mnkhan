@@ -1000,6 +1000,104 @@ const sendAccountRejectionEmail = async (user, reason) => {
   }
 };
 
+/**
+ * Send admin notification email when a new user signs up
+ * @param {object} user - New user details
+ * @returns {Promise<object>} Email send result
+ */
+const sendAdminNewUserSignupNotification = async (user) => {
+  try {
+    const { name, email, phone } = user;
+    const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL || process.env.SMTP_USER;
+
+    const emailHtml = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>New User Registration</title>
+      <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;600;700&display=swap');
+        body { font-family: 'Inter', Arial, sans-serif; line-height: 1.6; color: #1e1e1e; margin: 0; padding: 0; background-color: #f5f5f5; }
+        .container { max-width: 600px; margin: 40px auto; background: #ffffff; border: 1px solid #e0e0e0; overflow: hidden; }
+        .header { background-color: #1e1e1e; padding: 40px 20px; text-align: center; border-bottom: 4px solid #df6a1f; }
+        .header h1 { color: #ffffff; margin: 0; font-family: 'Playfair Display', serif; font-style: italic; font-size: 28px; letter-spacing: 1px; }
+        .content { padding: 40px; }
+        .details-box { background: #fcfcfc; border: 1px solid #f0f0f0; border-radius: 4px; padding: 25px; margin: 30px 0; }
+        .details-table { width: 100%; border-collapse: collapse; }
+        .details-table td { padding: 12px 0; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
+        .details-table td:first-child { color: #888; text-transform: uppercase; font-size: 10px; letter-spacing: 1px; }
+        .details-table td:last-child { text-align: right; font-weight: 600; }
+        .btn-container { text-align: center; margin: 40px 0; }
+        .btn { display: inline-block; background-color: #1e1e1e; color: #ffffff !important; padding: 14px 40px; text-decoration: none; font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 2px; border-radius: 2px; border: 1px solid #df6a1f; }
+        .footer { background: #fafafa; padding: 30px; text-align: center; border-top: 1px solid #eee; }
+        .footer p { font-size: 11px; color: #888; margin: 5px 0; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>MN Khan & Associates</h1>
+          <p style="color: #df6a1f; margin: 5px 0 0 0; font-size: 10px; font-weight: bold; text-transform: uppercase; letter-spacing: 3px;">Registry Notification</p>
+        </div>
+        
+        <div class="content">
+          <h2 style="font-family: 'Playfair Display', serif; font-style: italic; color: #1e1e1e; font-size: 22px; margin-top: 0;">New User Signup Request</h2>
+          <p>A new professional account has been registered and is awaiting administrative review.</p>
+          
+          <div class="details-box">
+            <table class="details-table">
+              <tr>
+                <td>Registrant Name</td>
+                <td>${name}</td>
+              </tr>
+              <tr>
+                <td>Email Address</td>
+                <td>${email}</td>
+              </tr>
+              <tr>
+                <td>Contact Number</td>
+                <td>${phone}</td>
+              </tr>
+              <tr>
+                <td>Registry Status</td>
+                <td style="color: #df6a1f;">Pending Approval</td>
+              </tr>
+            </table>
+          </div>
+          
+          <div class="btn-container">
+            <a href="${process.env.FRONTEND_URL || "http://nodes.mnkhan.online"}/admin/users" class="btn">Review in Dashboard</a>
+          </div>
+        </div>
+        
+        <div class="footer">
+          <p><strong>MN Khan & Associates</strong></p>
+          <p>System Generated Registry Alert</p>
+        </div>
+      </div>
+    </body>
+    </html>
+    `;
+
+    const mailOptions = {
+      from: process.env.SMTP_FROM || process.env.SMTP_USER,
+      to: adminEmail,
+      subject: `Registry Alert: New User Signup - ${name}`,
+      html: emailHtml,
+    };
+
+    const result = await sendEmail(mailOptions);
+    console.log("[Email] Admin notification email sent:", result.messageId);
+    return result;
+  } catch (error) {
+    console.error("[Email] Error sending admin notification email:", error);
+    // Don't throw for admin notifications to avoid breaking signup flow
+    return null;
+  }
+};
+
 module.exports = {
   sendConfirmationEmail,
   sendCancellationEmail,
@@ -1009,5 +1107,6 @@ module.exports = {
   sendAccountRejectionEmail,
   sendServiceConfirmationEmail,
   sendTaskUpdateEmail,
+  sendAdminNewUserSignupNotification,
   generateICSFile,
 };

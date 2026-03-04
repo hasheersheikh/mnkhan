@@ -3,6 +3,7 @@ const router = express.Router();
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const AdminUser = require("../models/AdminUser");
+const emailService = require("../services/emailService");
 
 const JWT_SECRET = process.env.JWT_SECRET || "mnkhan_secret_key_2026";
 
@@ -36,6 +37,13 @@ router.post("/signup", async (req, res) => {
 
     const user = new User({ name, email, phone, password, role: "client", status: "pending" });
     await user.save();
+
+    // Notify admin about new signup
+    try {
+      await emailService.sendAdminNewUserSignupNotification(user);
+    } catch (emailErr) {
+      console.warn(`[API] Signup successful but admin notification failed: ${emailErr.message}`);
+    }
 
     res.status(201).json({
       success: true,
