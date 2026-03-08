@@ -117,6 +117,22 @@ router.post(
 
       await task.save();
       console.log(`[API] Task created successfully: ${task._id}`);
+
+      // Notify client about new task
+      try {
+        const populatedTask = await Task.findById(task._id).populate("userId", "name email");
+        if (populatedTask && populatedTask.userId) {
+          await emailService.sendTaskUpdateEmail(
+            populatedTask.userId,
+            populatedTask,
+            "New Matter Assigned",
+            "A new matter has been registered for your account."
+          );
+        }
+      } catch (emailErr) {
+        console.warn("[API] Task created but email failed:", emailErr.message);
+      }
+
       res.status(201).json({ success: true, task });
     } catch (err) {
       console.error(`[API] Task creation error: ${err.message}`);
@@ -181,21 +197,32 @@ router.patch(
 
       await task.save();
 
-      // Send email notification to client
-      if (newEvent) {
-        try {
-          const populatedTask = await Task.findById(task._id).populate("userId", "name email");
-          if (populatedTask && populatedTask.userId) {
-            await emailService.sendTaskUpdateEmail(
-              populatedTask.userId,
-              populatedTask,
-              newEvent,
-              eventNote
-            );
+      // Send email notification to client for ANY update
+      try {
+        const populatedTask = await Task.findById(task._id).populate("userId", "name email");
+        if (populatedTask && populatedTask.userId) {
+          let emailEvent = newEvent;
+          let emailNote = eventNote;
+
+          if (!emailEvent) {
+            if (status) {
+              emailEvent = `Matter Status Updated: ${status.toUpperCase()}`;
+              emailNote = `The status of your matter "${populatedTask.title}" has been changed to ${status}.`;
+            } else {
+              emailEvent = "Matter Progress Updated";
+              emailNote = `Your matter "${populatedTask.title}" has been updated.`;
+            }
           }
-        } catch (emailErr) {
-          console.warn("[API] Task update saved but email failed:", emailErr.message);
+
+          await emailService.sendTaskUpdateEmail(
+            populatedTask.userId,
+            populatedTask,
+            emailEvent,
+            emailNote
+          );
         }
+      } catch (emailErr) {
+        console.warn("[API] Task update saved but email failed:", emailErr.message);
       }
       
       const updatedTask = await Task.findById(task._id)
@@ -270,6 +297,23 @@ router.post("/:id/comments", authenticateToken, async (req, res) => {
 
     task.comments.push(comment);
     await task.save();
+
+    // Notify client if the comment was NOT made by them
+    if (req.user.role !== "client") {
+      try {
+        const populatedTask = await Task.findById(req.params.id).populate("userId", "name email");
+        if (populatedTask && populatedTask.userId) {
+          await emailService.sendTaskUpdateEmail(
+            populatedTask.userId,
+            populatedTask,
+            "New Comment on Matter",
+            `Counsel ${req.user.name} added a comment to your matter: "${text.substring(0, 50)}${text.length > 50 ? "..." : ""}"`
+          );
+        }
+      } catch (emailErr) {
+        console.warn("[API] Comment added but email notification failed:", emailErr.message);
+      }
+    }
 
     // Return populated task for frontend UI update
     const updatedTask = await Task.findById(req.params.id)

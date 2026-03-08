@@ -835,7 +835,6 @@ const sendServiceConfirmationEmail = async (user, services, totalAmount, orderId
  */
 const sendTaskUpdateEmail = async (user, task, eventName, note = "") => {
   try {
-    const transporter = createTransporter();
     const { name, email } = user;
 
     const emailHtml = `
@@ -911,7 +910,7 @@ const sendTaskUpdateEmail = async (user, task, eventName, note = "") => {
       mailOptions.bcc = process.env.ADMIN_NOTIFICATION_EMAIL;
     }
 
-    const result = await transporter.sendMail(mailOptions);
+    const result = await sendEmail(mailOptions);
     console.log("[Email] Task update email sent:", result.messageId);
     return result;
   } catch (error) {

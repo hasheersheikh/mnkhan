@@ -67,6 +67,7 @@ router.get("/admin/all", authenticateToken, async (req, res) => {
     ]);
 
     res.json({
+      success: true,
       documents,
       pagination: {
         page: parseInt(page),
@@ -172,6 +173,7 @@ router.post(
       }
 
       res.status(201).json({
+        success: true,
         message: "Document uploaded successfully",
         document: {
           id: document._id,
@@ -183,9 +185,29 @@ router.post(
           createdAt: document.createdAt,
         },
       });
+
+      // Notify client if uploaded by admin/staff for a task
+      if (taskId && req.user.role !== "client") {
+        try {
+          const emailService = require("../services/emailService");
+          const userModel = require("../models/User"); // Need client details
+          const taskModel = require("../models/Task");
+          
+          const task = await taskModel.findById(taskId).populate("userId");
+          if (task && task.userId) {
+            await emailService.sendTaskUpdateEmail(
+              task.userId,
+              task,
+              "New Document Uploaded",
+              `A new document "${file.originalname}" has been added to your matter by ${req.user.name}.`
+            );
+          }
+        } catch (emailErr) {
+          console.warn("[API] Document uploaded but notification failed:", emailErr.message);
+        }
+      }
     } catch (error) {
       console.error("Document upload error:", error);
-
       // Handle multer file size error
       if (error.code === "LIMIT_FILE_SIZE") {
         return res
@@ -241,7 +263,7 @@ router.get("/", authenticateToken, async (req, res) => {
       .populate("appointmentId", "date startTime customerName")
       .populate("serviceId", "name");
 
-    res.json({ documents });
+    res.json({ success: true, documents });
   } catch (error) {
     console.error("Error fetching documents:", error);
     res.status(500).json({ message: "Error fetching documents" });
@@ -270,7 +292,7 @@ router.get("/:id", authenticateToken, async (req, res) => {
       return res.status(403).json({ message: "Access denied" });
     }
 
-    res.json({ document });
+    res.json({ success: true, document });
   } catch (error) {
     console.error("Error fetching document:", error);
     res.status(500).json({ message: "Error fetching document" });
@@ -307,7 +329,7 @@ router.delete("/:id", authenticateToken, async (req, res) => {
     // Delete from MongoDB
     await Document.findByIdAndDelete(req.params.id);
 
-    res.json({ message: "Document deleted successfully" });
+    res.json({ success: true, message: "Document deleted successfully" });
   } catch (error) {
     console.error("Error deleting document:", error);
     res.status(500).json({ message: "Error deleting document" });
@@ -340,7 +362,7 @@ router.patch("/:id/status", authenticateToken, async (req, res) => {
       return res.status(404).json({ message: "Document not found" });
     }
 
-    res.json({ message: "Document status updated", document });
+    res.json({ success: true, message: "Document status updated", document });
   } catch (error) {
     console.error("Error updating document status:", error);
     res.status(500).json({ message: "Error updating document status" });
