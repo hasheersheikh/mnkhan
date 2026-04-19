@@ -13,5 +13,8 @@ jobs:
       - name: Ping Backend
         run: curl -s -o /dev/null -w "%{http_code}" https://cloudops-backend-cloudops-v1.onrender.com
       
-      - name: Ping Frontend
+      - name: Ping CloudOps Frontend
         run: curl -s -o /dev/null -w "%{http_code}" https://cloudops-frontend-cloudops-v1.onrender.com
+      
+      - name: Ping MNKHAN Services
+        run: curl -s -o /dev/null -w "%{http_code}" https://mnkhan.onrender.com/api/services
